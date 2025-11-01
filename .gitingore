@@ -1,4 +1,5 @@
 **/logstf
 **/saved_models
+**/resulttf
 **/pretrained
 *.h5
