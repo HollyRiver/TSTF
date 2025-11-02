@@ -1,7 +1,7 @@
-logstf/
-saved_models/
-resulttf/
-result/
-pretrained/
-logs/
+**/logstf
+**/saved_models
+**/resulttf
+**/result
+**/pretrained
+**/logs
 *.h5
