@@ -267,7 +267,7 @@ def train_bagging_models(num_models, loss_fn, epochs_, patience_, batch_size_, l
         csv_log = CSVLogger(os.path.join(LOG_DIR, f'pretrain_{loss_name}_model{n+1}.csv'))
         early_stop = EarlyStopping(monitor='val_loss', patience=patience_, verbose=0, restore_best_weights=True)
         
-        pred_filepath = os.path.join(LOG_DIR, f'pretrain_val_results_{loss_name}_model{n+1}.csv')
+        pred_filepath = os.path.join(LOG_DIR, f'pretrain_val_results_{loss_name}_model{n+1}.csv')   ## 이건 왜 하는 걸까요, M4 데이터셋 훈련 결과 리포트하는 것도 아닌데
         save_preds_callback = SavePredsAndTruthCallback(
             validation_data=(X_val_split, y_val_split), 
             filepath=pred_filepath
@@ -319,7 +319,7 @@ def transfer_FC(model_num, trainable, lossf, epochs_, batch_size_, pt, lr_,
                             pretrained_output_reshaped=pretrained_output_reshaped,inputs=inputs)
 
         early_stop = EarlyStopping(monitor='val_loss', patience=pt, verbose=0, restore_best_weights=True)
-        csv_log   = CSVLogger(os.path.join(LOG_DIR, f'transfer_{str(lossf)}_lr{lr_}_run{i}.csv'))
+        csv_log   = CSVLogger(os.path.join(LOG_DIR, f'transfer_{str(lossf)}_lr{lr_}_run{i}.csv'))           ## save 1
 
         history = model_instance.fit(
             target_X.reshape(-1, target_X.shape[1], 1),            
@@ -347,7 +347,7 @@ def transfer_FC(model_num, trainable, lossf, epochs_, batch_size_, pt, lr_,
         tf.keras.backend.clear_session()
         import gc; gc.collect()
         
-    return model_pred_val, model_pred_test
+    return model_pred_val, model_pred_test  ## 예측 결과 산출
 
 def transfer_FC_SMAPE(model_num, trainable, lossf, epochs_, batch_size_, pt, lr_,
                       model_path='../pretrain/pretrain_NI/', modelloss='pretrain_smape.h5'):
@@ -499,6 +499,7 @@ _ = train_bagging_models(model_num, SMAPE(), 2000, 10, 256, lr)
 os.makedirs('resulttf/val', exist_ok=True)
 os.makedirs('resulttf/test', exist_ok=True)
 
+## 예측 결과 저장: k개 모델 예측 결과를 다 때려박으면 됨. 모델 저장할 필요 없음.
 mase_pred, mase_pred2 = transfer_FC_MASE(model_num, True, MASE(target_y, y_train.shape[1]), 2000, 8, 10, learning_late)
 pd.DataFrame(np.array(mase_pred).reshape(1, -1)).to_csv(f'resulttf/val/trTFTF_{data}_mase_pred.csv')
 pd.DataFrame(np.array(mase_pred2).reshape(1, -1)).to_csv(f'resulttf/test/trTFTF_{data}_mase_pred.csv')
