@@ -267,7 +267,7 @@ def train_bagging_models(num_models, loss_fn, epochs_, patience_, batch_size_, l
         csv_log = CSVLogger(os.path.join(LOG_DIR, f'pretrain_{loss_name}_model{n+1}.csv'))
         early_stop = EarlyStopping(monitor='val_loss', patience=patience_, verbose=0, restore_best_weights=True)
         
-        pred_filepath = os.path.join(LOG_DIR, f'pretrain_val_results_{loss_name}_model{n+1}.csv')   ## 이건 왜 하는 걸까요, M4 데이터셋 훈련 결과 리포트하는 것도 아닌데
+        pred_filepath = os.path.join(LOG_DIR, f'pretrain_val_results_{loss_name}_model{n+1}.csv')
         save_preds_callback = SavePredsAndTruthCallback(
             validation_data=(X_val_split, y_val_split), 
             filepath=pred_filepath
