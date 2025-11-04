@@ -7,27 +7,64 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from transformers import PatchTSTConfig, PatchTSTForPrediction
+from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 from datasets import Dataset
 
+    
+class TransferMLP(torch.nn.Module):
+    def __init__(self, body, t_out, c_new):
+        super().__init__()
+        self.body = body
+        self.t_out = t_out
+        self.c_new = c_new
+        body_out_features = body.encoder.layers[-1].ff[-1].out_features
+
+        self.flatten = torch.nn.Flatten(start_dim = 2, end_dim = -1)
+        self.adapter = torch.nn.Linear(body_out_features*7, self.t_out * self.c_new)  ## Dense(128)
+
+        self.head = torch.nn.Sequential(
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(128, 64),
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(64, 1)
+        )
+
+    def forward(self, x):
+        features = self.body(past_values=x).last_hidden_state
+        flat_feat = self.flatten(features)  ## (B, body_out_features*10)
+        adapted_feat = self.adapter(flat_feat)
+        head_input = adapted_feat.view(-1, self.t_out, self.c_new)  ## (B, 24, 128)
+        output = self.head(head_input)
+
+        return output
 
 ## custom loss function
+class MASE(torch.nn.Module):
+    def __init__(self, training_data, period = 1):
+        super().__init__()
+        ## 원본 코드 구현, 사실상 MAE와 동일, 잘못 짜여진 코드, 일단은 하던대로 할 것.
+        self.scale = torch.mean(torch.abs(torch.tensor(training_data[period:] - training_data[:-period])))
+    
+    def forward(self, yhat, y):
+        error = torch.abs(y - yhat)
+        return torch.mean(error) / self.scale
+
 def SMAPE(yhat, y):
     numerator = 100*torch.abs(y - yhat)
     denominator = (torch.abs(y) + torch.abs(yhat))/2
     smape = torch.mean(numerator / denominator)
     return smape
 
-def MAPE(yhat, y):
+def MAPE_pretrained(yhat, y):
+    ## M4 데이터셋에는 0이 없음을 확인: 정상적으로 훈련 가능
     return torch.mean(100*torch.abs((y - yhat) / y))
 
-class MASE(torch.nn.Module):
-    def __init__(self, training_data, period = 1):
-        super().__init__()
-        self.scale = torch.mean(torch.abs(training_data[:, period:] - data[:, :-period]))    ## 모든 훈련 데이터에 대한 평균 스케일 계산
-    
-    def forward(self, yhat, y):
-        error = torch.abs(y - yhat)
-        return torch.mean(error / self.scale)
+def MAPE(y_pred, y_true, epsilon=1e-7):
+    ## 분모에 0이 들어오는 것을 방지. 문제가 많지만, 케라스 코드를 그대로 이식했음 -> 어차피 중앙값 차원에서 걸러질 듯.
+    denominator = torch.clamp(torch.abs(y_true), min=epsilon)
+    abs_percent_error = torch.abs((y_true - y_pred) / denominator)
+
+    return torch.mean(100. * abs_percent_error)
 
 
 def savePredsAndTruth(yhat, y, loss_name, ith):
@@ -73,25 +110,27 @@ def pretraining(loss_name, ith):
     if loss_name == "mse":
         loss_fn = torch.nn.MSELoss()
         lr = pretraining_lr
+    elif loss_name == "mae":
+        loss_fn = torch.nn.L1Loss() ## 2배면 잘 작동
+        lr = pretraining_lr * 2
+    elif loss_name == "SMAPE":
+        loss_fn = SMAPE             ## 4배면 잘 작동
+        lr = pretraining_lr * 4
+    elif loss_name == "mape":
+        loss_fn = MAPE              ## 2배면 잘 작동
+        lr = pretraining_lr * 2
+    elif loss_name == "MASE":
+        loss_fn = MASE(source_y, source_y.shape[1])
+        lr = pretraining_lr * 14  ## 학습률 정상화... 그래도 잘 안됨
     else:
-        lr = pretraining_lr*2
-        if loss_name == "mae":
-            loss_fn = torch.nn.L1Loss()
-        elif loss_name == "SMAPE":
-            loss_fn = SMAPE
-        elif loss_name == "mape":
-            loss_fn = MAPE
-        elif loss_name == "MASE":
-            loss_fn = MASE(source_y, 1)
-        else:
-            raise Exception("Your loss name is not valid.")
+        raise Exception("Your loss name is not valid.")
 
     optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = lr)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = num_train_epochs)
     log_data = []
 
     ## early stopping
-    PATIENCE = 15
+    PATIENCE = 10
     best_val_loss = np.inf
     patience_counter = 0
 
@@ -165,32 +204,41 @@ def pretraining(loss_name, ith):
 
     savePredsAndTruth(yyhat, yy, loss_name, ith)    ## f"prediction_val_results_{loss_name}_model{ith}.csv"
 
+    del backbone_model
+    torch.cuda.empty_cache()
+    gc.collect()
 
-def transfer_FC(model_num, loss_name, batch_size):
+
+def transfer_FC(model_num, loss_name):
+    model_pred_val, model_pred_test = [], []
+
+    T_OUT = target_y.shape[1]
+    C_NEW = 128
+
     for i in range(1, model_num + 1):
         current_path = os.path.join(output_dir, f"model_{loss_name}_{i}.pth")
 
         backbone_model = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, "PatchTSTBackbone")).to(device)
-        backbone_model.load_state_dict(torch.load(current_path))    ## 구조 변경 없이 그대로 로드
+        backbone_model.load_state_dict(torch.load(current_path))
+        backbone = backbone_model.model     ## 헤드 제거
 
-        optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = learning_rate)
+        model_instance = TransferMLP(backbone, T_OUT, C_NEW).to(device)
+
+        optimizer = torch.optim.Adam(model_instance.parameters(), lr = learning_rate)
         log_data = []
 
         if loss_name == "mse":
             loss_fn = torch.nn.MSELoss()
-            lr = learning_rate
+        elif loss_name == "mae":
+            loss_fn = torch.nn.L1Loss()
+        elif loss_name == "SMAPE":
+            loss_fn = SMAPE
+        elif loss_name == "mape":
+            loss_fn = MAPE
+        elif loss_name == "MASE":
+            loss_fn = MASE(target_y, target_y.shape[1])
         else:
-            lr = learning_rate*2
-            if loss_name == "mae":
-                loss_fn = torch.nn.L1Loss()
-            elif loss_name == "SMAPE":
-                loss_fn = SMAPE
-            elif loss_name == "mape":
-                loss_fn = MAPE
-            elif loss_name == "MASE":
-                loss_fn = MASE(target_y, 1)
-            else:
-                raise Exception("Your loss name is not valid.")
+            raise Exception("Your loss name is not valid.")
 
         ## early stopping
         PATIENCE = 10
@@ -198,7 +246,7 @@ def transfer_FC(model_num, loss_name, batch_size):
         patience_counter = 0
 
         for epoc in range(num_train_epochs):
-            backbone_model.train()
+            model_instance.train()
 
             total_train_loss = 0
 
@@ -206,7 +254,7 @@ def transfer_FC(model_num, loss_name, batch_size):
                 X, y = X.to(device), y.to(device)
 
                 optimizer.zero_grad()
-                yhat = backbone_model(X).prediction_outputs
+                yhat = model_instance(X)
                 loss = loss_fn(yhat, y)
                 loss.backward()
                 optimizer.step()
@@ -215,7 +263,7 @@ def transfer_FC(model_num, loss_name, batch_size):
 
             avg_train_loss = total_train_loss/len(train_dataloader.dataset)
 
-            backbone_model.eval()
+            model_instance.eval()
 
             with torch.no_grad():
                 yys = []
@@ -224,7 +272,7 @@ def transfer_FC(model_num, loss_name, batch_size):
                 for XX, yy in val_dataloader:
                     XX = XX.to(device)
                     yys.append(yy.to(device))
-                    yyhats.append(backbone_model(XX).prediction_outputs)
+                    yyhats.append(model_instance(XX))
 
                 yyhat = torch.concat(yyhats)
                 yy = torch.concat(yys)
@@ -237,7 +285,7 @@ def transfer_FC(model_num, loss_name, batch_size):
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                best_state_dict = backbone_model.state_dict()   ## 저장 없이 결과물만 산출...
+                best_state_dict = model_instance.state_dict()   ## 저장 없이 결과물만 산출...
                 patience_counter = 0
             else:
                 patience_counter += 1
@@ -245,9 +293,44 @@ def transfer_FC(model_num, loss_name, batch_size):
             if patience_counter >= PATIENCE:
                 break
 
-        backbone_model.load_state_dict(best_state_dict)
+        model_instance.load_state_dict(best_state_dict)
 
         pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{1}.csv"))
+
+        with torch.no_grad():
+            yys = []
+            yyhats = []
+
+            for XX, yy in test_dataloader:
+                XX = XX.to(device)
+                yys.append(yy.to(device))
+                yyhats.append(model_instance(XX))
+
+            yyhat = torch.concat(yyhats)
+            yy = torch.concat(yys)
+
+            model_pred_test.append(yyhat.squeeze().to("cpu"))
+
+            yys = []
+            yyhats = []
+
+            for XX, yy in val_dataloader:
+                XX = XX.to(device)
+                yys.append(yy.to(device))
+                yyhats.append(model_instance(XX))
+
+            yyhat = torch.concat(yyhats)
+            yy = torch.concat(yys)
+
+            model_pred_val.append(yyhat.squeeze().to("cpu"))
+
+        del model_instance
+        del backbone_model
+        del backbone
+        torch.cuda.empty_cache()
+        gc.collect()
+
+    return model_pred_val, model_pred_test
 
 
 if __name__ == "__main__":
@@ -357,3 +440,27 @@ if __name__ == "__main__":
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = 8, shuffle = True)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size = 64)
     test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64)
+
+
+    os.makedirs("resulttf/val", exist_ok = True)
+    os.makedirs("resulttf/test", exist_ok = True)
+
+    val_preds = {}
+    test_preds = {}
+
+    for loss_name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
+        print(f"Start to Transfer Learning with {loss_name}.")
+
+        pred_val, pred_test = transfer_FC(loss_name = loss_name, ith = ith)
+        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFMLP_{data}_{loss_name}_pred.csv")
+        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFMLP_{data}_{loss_name}_pred.csv")
+
+        val_preds[loss_name] = pred_val
+        test_preds[loss_name] = pred_test
+
+    ## ========== 전체/부분 앙상블 RMSE 출력 ==========
+    concat_G = np.concatenate(val_preds)
+    fin_pred_G = np.median(concat_G, axis = 0)
+    print("all", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+
+    concat_G = np.concatenate(val_preds[0])
