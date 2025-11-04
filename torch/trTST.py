@@ -10,6 +10,7 @@ from transformers import PatchTSTConfig, PatchTSTForPrediction
 from datasets import Dataset
 
 
+## custom loss function
 def SMAPE(yhat, y):
     numerator = 100*torch.abs(y - yhat)
     denominator = (torch.abs(y) + torch.abs(yhat))/2
@@ -19,11 +20,14 @@ def SMAPE(yhat, y):
 def MAPE(yhat, y):
     return torch.mean(100*torch.abs((y - yhat) / y))
 
-def MASE(yhat, y, period = 1):
-    diff = y[period:] - y[:-period]     ## 기존 코드에서 period가 y_train.shape[1]로 설정되어 있었음.
-    scale = torch.mean(torch.abs(diff))
-    error = torch.abs(y - yhat)
-    return torch.mean(error / scale)
+class MASE(torch.nn.Module):
+    def __init__(self, training_data, period = 1):
+        super().__init__()
+        self.scale = torch.mean(torch.abs(training_data[:, period:] - data[:, :-period]))    ## 모든 훈련 데이터에 대한 평균 스케일 계산
+    
+    def forward(self, yhat, y):
+        error = torch.abs(y - yhat)
+        return torch.mean(error / self.scale)
 
 
 def savePredsAndTruth(yhat, y, loss_name, ith):
@@ -40,6 +44,7 @@ def savePredsAndTruth(yhat, y, loss_name, ith):
 
 def pretraining(loss_name, ith):
     ## bootstrap
+    np.random.seed()
     select = np.random.choice(len(source_X), size=len(source_X), replace=True)
     X_bootstrap = source_X[select]
     y_bootstrap = source_y[select]
@@ -64,15 +69,25 @@ def pretraining(loss_name, ith):
 
     backbone_model = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, backbone_name)).to(device)  ## load to gpu
 
-    optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = pretraining_lr)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = num_train_epochs)
-    log_data = []
-
     if loss_name == "mse":
         loss_fn = torch.nn.MSELoss()
-    elif loss_name == "mae":
-        loss_fn = torch.nn.L1Loss()
-    # elif loss_name
+        lr = pretraining_lr
+    else:
+        lr = pretraining_lr*2
+        if loss_name == "mae":
+            loss_fn = torch.nn.L1Loss()
+        elif loss_name == "SMAPE":
+            loss_fn = SMAPE
+        elif loss_name == "mape":
+            loss_fn = MAPE
+        elif loss_name == "MASE":
+            loss_fn = MASE
+        else:
+            raise Exception("Your loss name is not valid.")
+
+    optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = lr)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = num_train_epochs)
+    log_data = []
 
     ## early stopping
     PATIENCE = 15
@@ -147,7 +162,12 @@ def pretraining(loss_name, ith):
 
     yyhat, yy = torch.concat(yyhats).squeeze(), torch.concat(yys).squeeze()
 
-    savePredsAndTruth(yyhat, yy, loss_name, ith)
+    savePredsAndTruth(yyhat, yy, loss_name, ith)    ## f"prediction_val_results_{loss_name}_model{ith}.csv"
+
+
+def transfer_FC(model_num, loss_name, batch_size):
+    for i in range(1, model_num + 1):
+        pass
 
 
 if __name__ == "__main__":
@@ -173,7 +193,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok = True)
     os.makedirs(log_dir, exist_ok=True)
 
-    num_train_epochs = 200
+    num_train_epochs = 400
 
     ## target domain
     target_X = pd.read_csv(f"../data/{data}/train_input_7.csv").iloc[:, 1:].values.astype(np.float32)
@@ -232,6 +252,7 @@ if __name__ == "__main__":
             print(f"Start to pretraining with {loss_name}.")
 
             for ith in range(1, model_num+1):
+                ## 사전학습, 손실 로그, val_results, state_dict
                 pretraining(loss_name = loss_name, ith = ith)
 
                 torch.cuda.empty_cache()
@@ -240,3 +261,19 @@ if __name__ == "__main__":
             print(f"Model {loss_name} is Already pretrained.")
 
     #### ========== Transfer ===========
+    def array_to_dataset(X, y):
+        X, y = torch.tensor(X), torch.tensor(y)
+        X = X.reshape(-1, X.shape[1], 1)
+        y = y.reshape(-1, y.shape[1], 1)
+
+        dataset = torch.utils.data.TensorDataset(X, y)
+
+        return dataset
+
+    train_dataset = array_to_dataset(target_X, target_y)
+    val_dataset = array_to_dataset(target_X_val, target_y_val)
+    test_dataset = array_to_dataset(test_X, test_y)
+
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = 8, shuffle = True)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size = 64)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64)
