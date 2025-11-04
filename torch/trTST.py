@@ -41,6 +41,7 @@ def savePredsAndTruth(yhat, y, loss_name, ith):
     val_result = pd.concat([yhat, y], axis = 1).sort_index(axis = 1)
     val_result.columns = [f"prediction_{(i+1)//2}" if i%2 == 1 else f"ground_truth_{(i+1)//2}" for i in range(1, val_result.shape[1]+1)]
     val_result.to_csv(os.path.join(log_dir, f"prediction_val_results_{loss_name}_model{ith}.csv"), index = False)
+    
 
 def pretraining(loss_name, ith):
     ## bootstrap
@@ -81,7 +82,7 @@ def pretraining(loss_name, ith):
         elif loss_name == "mape":
             loss_fn = MAPE
         elif loss_name == "MASE":
-            loss_fn = MASE
+            loss_fn = MASE(source_y, 1)
         else:
             raise Exception("Your loss name is not valid.")
 
@@ -167,7 +168,86 @@ def pretraining(loss_name, ith):
 
 def transfer_FC(model_num, loss_name, batch_size):
     for i in range(1, model_num + 1):
-        pass
+        current_path = os.path.join(output_dir, f"model_{loss_name}_{i}.pth")
+
+        backbone_model = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, "PatchTSTBackbone")).to(device)
+        backbone_model.load_state_dict(torch.load(current_path))    ## 구조 변경 없이 그대로 로드
+
+        optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = learning_rate)
+        log_data = []
+
+        if loss_name == "mse":
+            loss_fn = torch.nn.MSELoss()
+            lr = learning_rate
+        else:
+            lr = learning_rate*2
+            if loss_name == "mae":
+                loss_fn = torch.nn.L1Loss()
+            elif loss_name == "SMAPE":
+                loss_fn = SMAPE
+            elif loss_name == "mape":
+                loss_fn = MAPE
+            elif loss_name == "MASE":
+                loss_fn = MASE(target_y, 1)
+            else:
+                raise Exception("Your loss name is not valid.")
+
+        ## early stopping
+        PATIENCE = 10
+        best_val_loss = np.inf
+        patience_counter = 0
+
+        for epoc in range(num_train_epochs):
+            backbone_model.train()
+
+            total_train_loss = 0
+
+            for X, y in train_dataloader:
+                X, y = X.to(device), y.to(device)
+
+                optimizer.zero_grad()
+                yhat = backbone_model(X).prediction_outputs
+                loss = loss_fn(yhat, y)
+                loss.backward()
+                optimizer.step()
+
+                total_train_loss += loss.item()*X.shape[0]
+
+            avg_train_loss = total_train_loss/len(train_dataloader.dataset)
+
+            backbone_model.eval()
+
+            with torch.no_grad():
+                yys = []
+                yyhats = []
+
+                for XX, yy in val_dataloader:
+                    XX = XX.to(device)
+                    yys.append(yy.to(device))
+                    yyhats.append(backbone_model(XX).prediction_outputs)
+
+                yyhat = torch.concat(yyhats)
+                yy = torch.concat(yys)
+
+                val_loss = loss_fn(yyhat, yy).item()
+
+            print(f"Epoch {epoc+1}/{num_train_epochs} | Train Loss: {avg_train_loss:.6f}\t\t Val Loss: {val_loss:.6f}")
+
+            log_data.append({"epoch": epoc, "loss": avg_train_loss, "eval_loss": val_loss})
+
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_state_dict = backbone_model.state_dict()   ## 저장 없이 결과물만 산출...
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= PATIENCE:
+                break
+
+        backbone_model.load_state_dict(best_state_dict)
+
+        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{1}.csv"))
 
 
 if __name__ == "__main__":
