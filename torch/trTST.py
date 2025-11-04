@@ -445,22 +445,22 @@ if __name__ == "__main__":
     os.makedirs("resulttf/val", exist_ok = True)
     os.makedirs("resulttf/test", exist_ok = True)
 
-    val_preds = {}
-    test_preds = {}
+    # val_preds = {}
+    # test_preds = {}
 
-    for loss_name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
-        print(f"Start to Transfer Learning with {loss_name}.")
+    # for loss_name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
+    #     print(f"Start to Transfer Learning with {loss_name}.")
 
-        pred_val, pred_test = transfer_FC(loss_name = loss_name, ith = ith)
-        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFMLP_{data}_{loss_name}_pred.csv")
-        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFMLP_{data}_{loss_name}_pred.csv")
+    #     pred_val, pred_test = transfer_FC(loss_name = loss_name, ith = ith)
+    #     pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFMLP_{data}_{loss_name}_pred.csv")
+    #     pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFMLP_{data}_{loss_name}_pred.csv")
 
-        val_preds[loss_name] = pred_val
-        test_preds[loss_name] = pred_test
+    #     val_preds[loss_name] = pred_val
+    #     test_preds[loss_name] = pred_test
 
-    ## ========== 전체/부분 앙상블 RMSE 출력 ==========
-    concat_G = np.concatenate(val_preds)
-    fin_pred_G = np.median(concat_G, axis = 0)
-    print("all", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+    # ## ========== 전체/부분 앙상블 RMSE 출력 ==========
+    # concat_G = np.concatenate(val_preds)
+    # fin_pred_G = np.median(concat_G, axis = 0)
+    # print("all", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
 
-    concat_G = np.concatenate(val_preds[0])
+    # concat_G = np.concatenate(val_preds[0])
