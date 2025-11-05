@@ -11,16 +11,17 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolu
 from datasets import Dataset
 
     
-class TransferMLP(torch.nn.Module):
-    def __init__(self, body, t_out, c_new):
+class TransferModel(torch.nn.Module):
+    """
+    Backbone 전용 아키텍쳐.
+    backbone_model.head.projection 자리에 삽입
+    backbone_model.head.dropout 자리에 torch.nn.Identity() 삽입 (드롭아웃 레이어를 제거하는 방법을 찾는 것이 더 깔끔하지만, 임시로)
+    """
+    def __init__(self, t_out):
         super().__init__()
-        self.body = body
-        self.t_out = t_out
-        self.c_new = c_new
-        body_out_features = body.encoder.layers[-1].ff[-1].out_features
+        self.t_out = t_out  ## 24. target_y.shape[1]
 
-        self.flatten = torch.nn.Flatten(start_dim = 2, end_dim = -1)
-        self.adapter = torch.nn.Linear(body_out_features*7, self.t_out * self.c_new)  ## Dense(128)
+        self.adapter = torch.nn.Linear(1792, self.t_out * 128)   ## Dense(128)
 
         self.head = torch.nn.Sequential(
             torch.nn.Dropout(0.2),
@@ -30,10 +31,8 @@ class TransferMLP(torch.nn.Module):
         )
 
     def forward(self, x):
-        features = self.body(past_values=x).last_hidden_state
-        flat_feat = self.flatten(features)  ## (B, body_out_features*10)
-        adapted_feat = self.adapter(flat_feat)
-        head_input = adapted_feat.view(-1, self.t_out, self.c_new)  ## (B, 24, 128)
+        self.adapted_feat = self.adapter(x)
+        head_input = self.adapted_feat.view(-1, self.t_out, self.c_new)  ## (B, 24, 128)
         output = self.head(head_input)
 
         return output
@@ -56,7 +55,8 @@ def SMAPE(yhat, y):
     return smape
 
 def MAPE_pretrained(yhat, y):
-    ## M4 데이터셋에는 0이 없음을 확인: 정상적으로 훈련 가능
+    ## M4 데이터셋에는 0이 없음을 확인: 정상적으로 훈련 가능.
+    ## 아래의 MAPE와 근본적으로 동일하나, 
     return torch.mean(100*torch.abs((y - yhat) / y))
 
 def MAPE(y_pred, y_true, epsilon=1e-7):
@@ -117,7 +117,7 @@ def pretraining(loss_name, ith):
         loss_fn = SMAPE             ## 4배면 잘 작동
         lr = pretraining_lr * 4
     elif loss_name == "mape":
-        loss_fn = MAPE              ## 2배면 잘 작동
+        loss_fn = MAPE_pretrained   ## 2배면 잘 작동
         lr = pretraining_lr * 2
     elif loss_name == "MASE":
         loss_fn = MASE(source_y, source_y.shape[1])
