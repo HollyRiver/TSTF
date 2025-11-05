@@ -130,7 +130,7 @@ def pretraining(loss_name, ith):
     log_data = []
 
     ## early stopping
-    PATIENCE = 12
+    PATIENCE = 10
     best_val_loss = np.inf
     patience_counter = 0
 
