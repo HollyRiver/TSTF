@@ -46,11 +46,10 @@ os.makedirs(LOG_DIR, exist_ok=True)
 target_X = pd.read_csv(f"../data/{data}/train_input_7.csv").iloc[:, 1:].values.astype(np.float32)
 target_y = pd.read_csv(f"../data/{data}/train_output_7.csv").iloc[:, 1:].values.astype(np.float32)
 
-## 왜 있는 거임???
-X_train = target_X[:-round(target_X.shape[0] * 0.2), :].astype(np.float32)
-y_train = target_y[:-round(target_y.shape[0] * 0.2)].astype(np.float32)
 target_X_val = target_X[-round(target_X.shape[0] * 0.2):, :].astype(np.float32)
 target_y_val = target_y[-round(target_y.shape[0] * 0.2):].astype(np.float32)
+target_X = target_X[:-round(target_X.shape[0] * 0.2), :].astype(np.float32)
+target_y = target_y[:-round(target_y.shape[0] * 0.2)].astype(np.float32)
 
 test_X  = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
 test_y  = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)

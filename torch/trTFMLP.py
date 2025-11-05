@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from transformers import PatchTSTConfig, PatchTSTForPrediction
-from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from datasets import Dataset
 
     
@@ -463,11 +463,35 @@ if __name__ == "__main__":
         test_preds[loss_name] = pred_test
 
     ## ========== 전체/부분 앙상블 RMSE 출력 ==========
-    concat_G = np.concatenate(val_preds)
+    concat_G = np.concatenate(list(val_preds.values()))
     fin_pred_G = np.median(concat_G, axis = 0)
-    print("all", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+    print("all (RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+    print(f"all (MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
 
     ## 어떤 점에서 best?
     concat_G = np.concatenate([val_preds[loss] for loss in ["mae", "MASE", "mse"]])
     fin_pred_G = np.median(concat_G, axis = 0)
-    print("best", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+    print("best (RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+    print(f"best (MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
+
+    ## 변수별 앙상블 결과
+    for name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
+        concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan=0)])
+        fin_pred_G = np.median(concat_G, axis=0)
+        print(name, "(RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+        print(name, f"(MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
+
+    ## ========== 지표별 단독 RMSE 저장 (어차피 안쓰는 파일인데?) ==========
+    rmse = []
+    mae = []
+
+    for name in ["MASE", "mape", "SMAPE", "mae", "mse"]:
+        concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan = 0)])
+        fin_pred = np.median(concat_G, axis = 0)
+        rmse.append(np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred.flatten())).round(5))
+        mae.append(round(mean_absolute_error(target_y_val.flatten(), fin_pred.flatten()), 5))
+
+    performance = np.array(rmse)
+    os.makedirs("resulttf", exist_ok = True)
+    pd.DataFrame(performance).to_csv(f"resulttf/trTFTF_{data}_weight.csv")
+    pd.DataFrame(np.array(mae)).to_csv(f"resulttf/trTFTF_{data}_weight_mae.csv")
