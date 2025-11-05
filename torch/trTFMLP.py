@@ -56,7 +56,7 @@ def SMAPE(yhat, y):
 
 def MAPE_pretrained(yhat, y):
     ## M4 데이터셋에는 0이 없음을 확인: 정상적으로 훈련 가능.
-    ## 아래의 MAPE와 근본적으로 동일하나, 
+    ## 아래의 MAPE와 근본적으로 동일하나, 속도 향상을 위해 따로 처리
     return torch.mean(100*torch.abs((y - yhat) / y))
 
 def MAPE(y_pred, y_true, epsilon=1e-7):
