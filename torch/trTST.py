@@ -71,7 +71,7 @@ def savePredsAndTruth(yhat, y, loss_name, ith):
     """
     Pretrained Model에서 Prediction과 Ground Truth Log 저장 (훈련 후 호출)
     """
-    yhat, y = yhat.to("cpu"), y.to("cpu")   ## 데이터프레임으로 만들거임
+    yhat, y = pd.DataFrame(yhat.to("cpu")), pd.DataFrame(y.to("cpu"))   ## 데이터프레임으로 만들거임
     yhat.columns = [f"{i}A" for i in range(yhat.shape[1])]
     y.columns = [f"{i}B" for i in range(y.shape[1])]
 
@@ -130,7 +130,7 @@ def pretraining(loss_name, ith):
     log_data = []
 
     ## early stopping
-    PATIENCE = 10
+    PATIENCE = 12
     best_val_loss = np.inf
     patience_counter = 0
 
