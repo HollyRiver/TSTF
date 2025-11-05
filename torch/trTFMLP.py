@@ -493,5 +493,5 @@ if __name__ == "__main__":
 
     performance = np.array(rmse)
     os.makedirs("resulttf", exist_ok = True)
-    pd.DataFrame(performance).to_csv(f"resulttf/trTFTF_{data}_weight.csv")
-    pd.DataFrame(np.array(mae)).to_csv(f"resulttf/trTFTF_{data}_weight_mae.csv")
+    pd.DataFrame(performance).to_csv(f"resulttf/trTFMLP_{data}_weight.csv")
+    pd.DataFrame(np.array(mae)).to_csv(f"resulttf/trTFMLP_{data}_weight_mae.csv")
