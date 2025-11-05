@@ -32,7 +32,7 @@ class TransferModel(torch.nn.Module):
 
     def forward(self, x):
         self.adapted_feat = self.adapter(x)
-        head_input = self.adapted_feat.view(-1, self.t_out, self.c_new)  ## (B, 24, 128)
+        head_input = self.adapted_feat.view(-1, self.t_out, 128)  ## (B, 24, 128)
         output = self.head(head_input)
 
         return output
@@ -213,16 +213,17 @@ def transfer_FC(model_num, loss_name):
     model_pred_val, model_pred_test = [], []
 
     T_OUT = target_y.shape[1]
-    C_NEW = 128
 
     for i in range(1, model_num + 1):
         current_path = os.path.join(output_dir, f"model_{loss_name}_{i}.pth")
 
-        backbone_model = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, "PatchTSTBackbone")).to(device)
-        backbone_model.load_state_dict(torch.load(current_path))
-        backbone = backbone_model.model     ## 헤드 제거
+        model_instance = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, "PatchTSTBackbone"))
+        model_instance.load_state_dict(torch.load(current_path))
 
-        model_instance = TransferMLP(backbone, T_OUT, C_NEW).to(device)
+        ## output layer 제거, MLP 헤드 부착
+        model_instance.head.projection = TransferModel(T_OUT)
+        model_instance.head.dropout = torch.nn.Identity()
+        model_instance.to(device)
 
         optimizer = torch.optim.Adam(model_instance.parameters(), lr = learning_rate)
         log_data = []
@@ -254,7 +255,7 @@ def transfer_FC(model_num, loss_name):
                 X, y = X.to(device), y.to(device)
 
                 optimizer.zero_grad()
-                yhat = model_instance(X)
+                yhat = model_instance(X).prediction_outputs
                 loss = loss_fn(yhat, y)
                 loss.backward()
                 optimizer.step()
@@ -272,7 +273,7 @@ def transfer_FC(model_num, loss_name):
                 for XX, yy in val_dataloader:
                     XX = XX.to(device)
                     yys.append(yy.to(device))
-                    yyhats.append(model_instance(XX))
+                    yyhats.append(model_instance(XX).prediction_outputs)
 
                 yyhat = torch.concat(yyhats)
                 yy = torch.concat(yys)
@@ -325,8 +326,6 @@ def transfer_FC(model_num, loss_name):
             model_pred_val.append(yyhat.squeeze().to("cpu"))
 
         del model_instance
-        del backbone_model
-        del backbone
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -445,22 +444,30 @@ if __name__ == "__main__":
     os.makedirs("resulttf/val", exist_ok = True)
     os.makedirs("resulttf/test", exist_ok = True)
 
-    # val_preds = {}
-    # test_preds = {}
+    val_preds = {}
+    test_preds = {}
 
-    # for loss_name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
-    #     print(f"Start to Transfer Learning with {loss_name}.")
+    ## 변수 이름 설정에 일관성이 없네
+    save_name = ["mse", "mae", "mase", "mape", "smape"]
 
-    #     pred_val, pred_test = transfer_FC(loss_name = loss_name, ith = ith)
-    #     pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFMLP_{data}_{loss_name}_pred.csv")
-    #     pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFMLP_{data}_{loss_name}_pred.csv")
+    for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
+        print(f"Start to Transfer Learning with {loss_name}.")
 
-    #     val_preds[loss_name] = pred_val
-    #     test_preds[loss_name] = pred_test
+        pred_val, pred_test = transfer_FC(model_num, loss_name = loss_name)
 
-    # ## ========== 전체/부분 앙상블 RMSE 출력 ==========
-    # concat_G = np.concatenate(val_preds)
-    # fin_pred_G = np.median(concat_G, axis = 0)
-    # print("all", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+        ## 예측 결과 저장
+        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFMLP_{data}_{save_name[i]}_pred.csv")
+        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFMLP_{data}_{save_name[i]}_pred.csv")
 
-    # concat_G = np.concatenate(val_preds[0])
+        val_preds[loss_name] = pred_val
+        test_preds[loss_name] = pred_test
+
+    ## ========== 전체/부분 앙상블 RMSE 출력 ==========
+    concat_G = np.concatenate(val_preds)
+    fin_pred_G = np.median(concat_G, axis = 0)
+    print("all", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+
+    ## 어떤 점에서 best?
+    concat_G = np.concatenate([val_preds[loss] for loss in ["mae", "MASE", "mse"]])
+    fin_pred_G = np.median(concat_G, axis = 0)
+    print("best", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
