@@ -355,7 +355,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok = True)
     os.makedirs(log_dir, exist_ok=True)
 
-    num_train_epochs = 400
+    num_train_epochs = 2000
 
     ## target domain
     target_X = pd.read_csv(f"../data/{data}/train_input_7.csv").iloc[:, 1:].values.astype(np.float32)
