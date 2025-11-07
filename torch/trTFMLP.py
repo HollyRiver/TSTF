@@ -100,10 +100,10 @@ def pretraining(loss_name, ith):
 
     ## setting dataloader
     train_dataset = torch.utils.data.TensorDataset(X_train, y_train)
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = 256, shuffle = True, num_workers = 16)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = 256, shuffle = True, num_workers = 4)
 
     test_dataset = torch.utils.data.TensorDataset(X_valid, y_valid)
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 256, num_workers = 16)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 256, num_workers = 4)
 
     backbone_model = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, backbone_name)).to(device)  ## load to gpu
 
