@@ -4,4 +4,5 @@
 **/result
 **/pretrained
 **/logs
+**/inference
 *.h5
