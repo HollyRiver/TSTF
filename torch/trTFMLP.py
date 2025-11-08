@@ -296,7 +296,7 @@ def transfer_FC(model_num, loss_name):
 
         model_instance.load_state_dict(best_state_dict)
 
-        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{1}.csv"))
+        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{i}.csv"))
 
         with torch.no_grad():
             yys = []
