@@ -305,7 +305,7 @@ def transfer_FC(model_num, loss_name):
             for XX, yy in test_dataloader:
                 XX = XX.to(device)
                 yys.append(yy.to(device))
-                yyhats.append(model_instance(XX))
+                yyhats.append(model_instance(XX).prediction_outputs)
 
             yyhat = torch.concat(yyhats)
             yy = torch.concat(yys)
@@ -318,7 +318,7 @@ def transfer_FC(model_num, loss_name):
             for XX, yy in val_dataloader:
                 XX = XX.to(device)
                 yys.append(yy.to(device))
-                yyhats.append(model_instance(XX))
+                yyhats.append(model_instance(XX).prediction_outputs)
 
             yyhat = torch.concat(yyhats)
             yy = torch.concat(yys)
