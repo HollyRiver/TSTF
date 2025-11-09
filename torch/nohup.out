@@ -1,0 +1,210 @@
+2025-11-09 14:54:16.714521: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:54:16.764267: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:54:16.908019: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:54:16.919199: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:54:17.110905: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+usage: trTFTF.py [-h] [--model_num MODEL_NUM] [--data DATA] [--lr LR]
+                 [--backbone BACKBONE] [--transfer_loss TRANSFER_LOSS]
+trTFTF.py: error: unrecognized arguments: --training_loss=MASE
+usage: trTFTF.py [-h] [--model_num MODEL_NUM] [--data DATA] [--lr LR]
+                 [--backbone BACKBONE] [--transfer_loss TRANSFER_LOSS]
+trTFTF.py: error: unrecognized arguments: --training_loss=mape
+usage: trTFTF.py [-h] [--model_num MODEL_NUM] [--data DATA] [--lr LR]
+                 [--backbone BACKBONE] [--transfer_loss TRANSFER_LOSS]
+trTFTF.py: error: unrecognized arguments: --training_loss=SMAPE
+usage: trTFTF.py [-h] [--model_num MODEL_NUM] [--data DATA] [--lr LR]
+                 [--backbone BACKBONE] [--transfer_loss TRANSFER_LOSS]
+trTFTF.py: error: unrecognized arguments: --training_loss=mae
+usage: trTFTF.py [-h] [--model_num MODEL_NUM] [--data DATA] [--lr LR]
+                 [--backbone BACKBONE] [--transfer_loss TRANSFER_LOSS]
+trTFTF.py: error: unrecognized arguments: --training_loss=mse
+2025-11-09 14:55:33.983287: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:55:34.063245: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:55:34.167142: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:55:34.167269: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-09 14:55:34.207704: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+/root/TSTF/torch/trTFTF.py:24: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 0::2] = torch.sin(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:24: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 0::2] = torch.sin(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:24: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 0::2] = torch.sin(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:24: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 0::2] = torch.sin(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:24: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 0::2] = torch.sin(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:25: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 1::2] = torch.cos(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:25: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 1::2] = torch.cos(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:25: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 1::2] = torch.cos(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:25: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 1::2] = torch.cos(torch.tensor(position * div_term))
+/root/TSTF/torch/trTFTF.py:25: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.detach().clone() or sourceTensor.detach().clone().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  pe[:, 1::2] = torch.cos(torch.tensor(position * div_term))
+/root/anaconda3/envs/TF/lib/python3.12/site-packages/torch/nn/modules/loss.py:634: UserWarning: Using a target size (torch.Size([8, 24, 1])) that is different to the input size (torch.Size([8, 1, 24])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+/root/anaconda3/envs/TF/lib/python3.12/site-packages/torch/nn/modules/loss.py:132: UserWarning: Using a target size (torch.Size([8, 24, 1])) that is different to the input size (torch.Size([8, 1, 24])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.l1_loss(input, target, reduction=self.reduction)
+/root/anaconda3/envs/TF/lib/python3.12/site-packages/torch/nn/modules/loss.py:634: UserWarning: Using a target size (torch.Size([2, 24, 1])) that is different to the input size (torch.Size([2, 1, 24])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+/root/anaconda3/envs/TF/lib/python3.12/site-packages/torch/nn/modules/loss.py:634: UserWarning: Using a target size (torch.Size([145, 24, 1])) that is different to the input size (torch.Size([145, 1, 24])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+/root/anaconda3/envs/TF/lib/python3.12/site-packages/torch/nn/modules/loss.py:132: UserWarning: Using a target size (torch.Size([2, 24, 1])) that is different to the input size (torch.Size([2, 1, 24])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.l1_loss(input, target, reduction=self.reduction)
+/root/anaconda3/envs/TF/lib/python3.12/site-packages/torch/nn/modules/loss.py:132: UserWarning: Using a target size (torch.Size([145, 24, 1])) that is different to the input size (torch.Size([145, 1, 24])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.l1_loss(input, target, reduction=self.reduction)
+Backbone Architecture is already generated.
+Model mse is Already pretrained.
+Model mae is Already pretrained.
+Model MASE is Already pretrained.
+Model mape is Already pretrained.
+Model SMAPE is Already pretrained.
+Start to Transfer Learning with SMAPE.
+Epoch 1/2000 | Train Loss: 7.501976		 Val Loss: 5.740635
+Epoch 2/2000 | Train Loss: 7.500231		 Val Loss: 5.741359
+Epoch 3/2000 | Train Loss: 7.497949		 Val Loss: 5.740791
+Epoch 4/2000 | Train Loss: 7.492425		 Val Loss: 5.741310
+Epoch 5/2000 | Train Loss: 7.494493		 Val Loss: 5.740460
+Epoch 6/2000 | Train Loss: 7.488008		 Val Loss: 5.741201
+Epoch 7/2000 | Train Loss: 7.489205		 Val Loss: 5.740669
+Epoch 8/2000 | Train Loss: 7.486199		 Val Loss: 5.740564
+Epoch 9/2000 | Train Loss: 7.477621		 Val Loss: 5.739815
+Epoch 10/2000 | Train Loss: 7.481549		 Val Loss: 5.738893
+Epoch 11/2000 | Train Loss: 7.476452		 Val Loss: 5.738050
+Epoch 12/2000 | Train Loss: 7.471309		 Val Loss: 5.735944
+Epoch 13/2000 | Train Loss: 7.465455		 Val Loss: 5.735055
+Epoch 14/2000 | Train Loss: 7.459950		 Val Loss: 5.731775
+Epoch 15/2000 | Train Loss: 7.452752		 Val Loss: 5.727779
+Epoch 16/2000 | Train Loss: 7.446304		 Val Loss: 5.723441
+Epoch 17/2000 | Train Loss: 7.441919		 Val Loss: 5.718355
+Epoch 18/2000 | Train Loss: 7.436237		 Val Loss: 5.709799
+Epoch 19/2000 | Train Loss: 7.426319		 Val Loss: 5.704794
+Epoch 20/2000 | Train Loss: 7.417909		 Val Loss: 5.695226
+Epoch 21/2000 | Train Loss: 7.405443		 Val Loss: 5.685387
+Epoch 22/2000 | Train Loss: 7.392689		 Val Loss: 5.669937
+Epoch 23/2000 | Train Loss: 7.382424		 Val Loss: 5.663394
+Epoch 24/2000 | Train Loss: 7.365694		 Val Loss: 5.646354
+Epoch 25/2000 | Train Loss: 7.344890		 Val Loss: 5.636764
+Epoch 26/2000 | Train Loss: 7.332115		 Val Loss: 5.610737
+Epoch 27/2000 | Train Loss: 7.308708		 Val Loss: 5.600155
+Epoch 28/2000 | Train Loss: 7.291653		 Val Loss: 5.582145
+Epoch 29/2000 | Train Loss: 7.273594		 Val Loss: 5.571197
+Epoch 30/2000 | Train Loss: 7.250572		 Val Loss: 5.553022
+Epoch 31/2000 | Train Loss: 7.232206		 Val Loss: 5.537107
+Epoch 32/2000 | Train Loss: 7.221135		 Val Loss: 5.513675
+Epoch 33/2000 | Train Loss: 7.184096		 Val Loss: 5.502533
+Epoch 34/2000 | Train Loss: 7.164323		 Val Loss: 5.485066
+Epoch 35/2000 | Train Loss: 7.129286		 Val Loss: 5.475087
+Epoch 36/2000 | Train Loss: 7.100614		 Val Loss: 5.444556
+Epoch 37/2000 | Train Loss: 7.069520		 Val Loss: 5.425032
+Epoch 38/2000 | Train Loss: 7.048377		 Val Loss: 5.406389
+Epoch 39/2000 | Train Loss: 7.018572		 Val Loss: 5.383567
+Epoch 40/2000 | Train Loss: 6.988804		 Val Loss: 5.367361
+Epoch 41/2000 | Train Loss: 6.952005		 Val Loss: 5.335227
+Epoch 42/2000 | Train Loss: 6.930253		 Val Loss: 5.315526
+Epoch 43/2000 | Train Loss: 6.889972		 Val Loss: 5.294851
+Epoch 44/2000 | Train Loss: 6.875327		 Val Loss: 5.273951
+Epoch 45/2000 | Train Loss: 6.841748		 Val Loss: 5.245582
+Epoch 46/2000 | Train Loss: 6.769013		 Val Loss: 5.230523
+Epoch 47/2000 | Train Loss: 6.774236		 Val Loss: 5.208143
+Epoch 48/2000 | Train Loss: 6.728716		 Val Loss: 5.177362
+Epoch 49/2000 | Train Loss: 6.671774		 Val Loss: 5.157937
+Epoch 50/2000 | Train Loss: 6.634060		 Val Loss: 5.136223
+Epoch 51/2000 | Train Loss: 6.602336		 Val Loss: 5.119401
+Epoch 52/2000 | Train Loss: 6.583327		 Val Loss: 5.089565
+Epoch 53/2000 | Train Loss: 6.525730		 Val Loss: 5.066934
+Epoch 54/2000 | Train Loss: 6.476824		 Val Loss: 5.047502
+Epoch 55/2000 | Train Loss: 6.470478		 Val Loss: 5.017383
+Epoch 56/2000 | Train Loss: 6.410727		 Val Loss: 4.997407
+Epoch 57/2000 | Train Loss: 6.350975		 Val Loss: 4.970010
+Epoch 58/2000 | Train Loss: 6.358680		 Val Loss: 4.943927
+Epoch 59/2000 | Train Loss: 6.306714		 Val Loss: 4.921094
+Epoch 60/2000 | Train Loss: 6.284596		 Val Loss: 4.905435
+Epoch 61/2000 | Train Loss: 6.201650		 Val Loss: 4.874775
+Epoch 62/2000 | Train Loss: 6.206696		 Val Loss: 4.852488
+Epoch 63/2000 | Train Loss: 6.154274		 Val Loss: 4.821587
+Epoch 64/2000 | Train Loss: 6.107120		 Val Loss: 4.800483
+Epoch 65/2000 | Train Loss: 6.088486		 Val Loss: 4.774342
+Epoch 66/2000 | Train Loss: 6.056406		 Val Loss: 4.746100
+Epoch 67/2000 | Train Loss: 6.077786		 Val Loss: 4.727492
+Epoch 68/2000 | Train Loss: 6.018073		 Val Loss: 4.707154
+Epoch 69/2000 | Train Loss: 5.988345		 Val Loss: 4.681319
+Epoch 70/2000 | Train Loss: 5.892661		 Val Loss: 4.653492
+Epoch 71/2000 | Train Loss: 5.901456		 Val Loss: 4.626944
+Epoch 72/2000 | Train Loss: 5.891109		 Val Loss: 4.608031
+Epoch 73/2000 | Train Loss: 5.805700		 Val Loss: 4.586206
+Epoch 74/2000 | Train Loss: 5.767630		 Val Loss: 4.566888
+Epoch 75/2000 | Train Loss: 5.719632		 Val Loss: 4.543078
+Epoch 76/2000 | Train Loss: 5.742749		 Val Loss: 4.530216
+Epoch 77/2000 | Train Loss: 5.710275		 Val Loss: 4.504017
+Epoch 78/2000 | Train Loss: 5.670302		 Val Loss: 4.486209
+Epoch 79/2000 | Train Loss: 5.654394		 Val Loss: 4.465726
+Epoch 80/2000 | Train Loss: 5.612289		 Val Loss: 4.444067
+Epoch 81/2000 | Train Loss: 5.577294		 Val Loss: 4.423015
+Epoch 82/2000 | Train Loss: 5.585272		 Val Loss: 4.399693
+Epoch 83/2000 | Train Loss: 5.566791		 Val Loss: 4.384821
+Epoch 84/2000 | Train Loss: 5.523391		 Val Loss: 4.363961
+Epoch 85/2000 | Train Loss: 5.514764		 Val Loss: 4.349329
+Epoch 86/2000 | Train Loss: 5.457012		 Val Loss: 4.323553
+Epoch 87/2000 | Train Loss: 5.484834		 Val Loss: 4.312943
+Epoch 88/2000 | Train Loss: 5.421143		 Val Loss: 4.298590
+Epoch 89/2000 | Train Loss: 5.391901		 Val Loss: 4.275098
+Epoch 90/2000 | Train Loss: 5.418202		 Val Loss: 4.256472
+Epoch 91/2000 | Train Loss: 5.392866		 Val Loss: 4.255263
+Epoch 92/2000 | Train Loss: 5.332006		 Val Loss: 4.227019
+Epoch 93/2000 | Train Loss: 5.343978		 Val Loss: 4.215504
+Epoch 94/2000 | Train Loss: 5.268677		 Val Loss: 4.190145
+Epoch 95/2000 | Train Loss: 5.279792		 Val Loss: 4.180020
+Epoch 96/2000 | Train Loss: 5.247794		 Val Loss: 4.156177
+Epoch 97/2000 | Train Loss: 5.187265		 Val Loss: 4.149817
+Epoch 98/2000 | Train Loss: 5.233217		 Val Loss: 4.124591
+Epoch 99/2000 | Train Loss: 5.284402		 Val Loss: 4.114731
+Epoch 100/2000 | Train Loss: 5.178173		 Val Loss: 4.106782
+Epoch 101/2000 | Train Loss: 5.149963		 Val Loss: 4.090961
+Epoch 102/2000 | Train Loss: 5.091388		 Val Loss: 4.074507
+Epoch 103/2000 | Train Loss: 5.130295		 Val Loss: 4.061831
+Epoch 104/2000 | Train Loss: 5.132791		 Val Loss: 4.039686
+Epoch 105/2000 | Train Loss: 5.108961		 Val Loss: 4.034122
+Epoch 106/2000 | Train Loss: 5.027624		 Val Loss: 4.023275
+Epoch 107/2000 | Train Loss: 5.078451		 Val Loss: 4.005313
+Epoch 108/2000 | Train Loss: 5.035518		 Val Loss: 3.994631
+Epoch 109/2000 | Train Loss: 4.978912		 Val Loss: 3.980317
+Epoch 110/2000 | Train Loss: 4.962882		 Val Loss: 3.995381
+Epoch 111/2000 | Train Loss: 4.985541		 Val Loss: 3.952619
+Epoch 112/2000 | Train Loss: 4.943327		 Val Loss: 3.947344
+Epoch 113/2000 | Train Loss: 4.939921		 Val Loss: 3.937855
+Epoch 114/2000 | Train Loss: 4.899198		 Val Loss: 3.908250
+Epoch 115/2000 | Train Loss: 4.964027		 Val Loss: 3.904329
+Epoch 116/2000 | Train Loss: 4.953865		 Val Loss: 3.895886
+Epoch 117/2000 | Train Loss: 4.865804		 Val Loss: 3.893083
+Epoch 118/2000 | Train Loss: 4.844571		 Val Loss: 3.894174
+Epoch 119/2000 | Train Loss: 4.928736		 Val Loss: 3.863790
+Epoch 120/2000 | Train Loss: 4.841887		 Val Loss: 3.852617
+Epoch 121/2000 | Train Loss: 4.861996		 Val Loss: 3.840034
+Epoch 122/2000 | Train Loss: 4.919575		 Val Loss: 3.838987
+Epoch 123/2000 | Train Loss: 4.781651		 Val Loss: 3.823301
+Epoch 124/2000 | Train Loss: 4.764649		 Val Loss: 3.809126
+Epoch 125/2000 | Train Loss: 4.716975		 Val Loss: 3.807318
+Epoch 126/2000 | Train Loss: 4.712239		 Val Loss: 3.788174
+Epoch 127/2000 | Train Loss: 4.810870		 Val Loss: 3.778384
+Epoch 128/2000 | Train Loss: 4.708785		 Val Loss: 3.774996
+Epoch 129/2000 | Train Loss: 4.716847		 Val Loss: 3.765627
+Epoch 130/2000 | Train Loss: 4.692178		 Val Loss: 3.757061
+Epoch 131/2000 | Train Loss: 4.683783		 Val Loss: 3.741984
+Epoch 132/2000 | Train Loss: 4.754954		 Val Loss: 3.748538
+Epoch 133/2000 | Train Loss: 4.628789		 Val Loss: 3.727154
+Epoch 134/2000 | Train Loss: 4.736120		 Val Loss: 3.718558
+Epoch 135/2000 | Train Loss: 4.700948		 Val Loss: 3.718169
+Epoch 136/2000 | Train Loss: 4.660065		 Val Loss: 3.723166
