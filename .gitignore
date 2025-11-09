@@ -1,7 +1,7 @@
 **/logstf
 **/saved_models
-**/resulttf
-**/result
+# **/resulttf
+# **/result
 **/pretrained
 **/logs
 **/inference
