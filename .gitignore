@@ -4,4 +4,5 @@
 **/logs
 **/inference
 **/running_logs
+**/result
 *.h5
