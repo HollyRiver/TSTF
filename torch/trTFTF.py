@@ -381,7 +381,6 @@ def transfer_FC(model_num, loss_name):
 
     return model_pred_val, model_pred_test
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "data, learning_rate, model_num")
 
@@ -390,16 +389,18 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type = float, default = 1e-6, help = "transfer learning rate")
     parser.add_argument("--backbone", type = str, default = "PatchTSTBackbone", help = "backbone model name")
     parser.add_argument("--transfer_loss", type = str, default = "all", help = "transfer loss type")
+    parser.add_argument("--device_id", type = int, default = 0, help = "GPU id")
 
     args = parser.parse_args()
 
     data = args.data
     backbone_name = args.backbone
     transfer_loss = args.transfer_loss
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
     output_dir = "saved_models"
-    log_dir = os.path.join('logstf', data)
+    log_dir = f"logs/{data}/tf"
     learning_rate = args.lr
     pretraining_lr = 5e-5
     model_num = args.model_num
@@ -418,8 +419,8 @@ if __name__ == "__main__":
     target_X = target_X[:-round(target_X.shape[0] * 0.2), :].astype(np.float32)
     target_y = target_y[:-round(target_y.shape[0] * 0.2)].astype(np.float32)
 
-    test_X  = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
-    test_y  = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
+    test_X = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
+    test_y = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
 
     ## source domain
     np.random.seed(2)
@@ -469,8 +470,8 @@ if __name__ == "__main__":
                 ## 사전학습, 손실 로그, val_results, state_dict
                 pretraining(loss_name = loss_name, ith = ith)
 
-                torch.cuda.empty_cache()
-                gc.collect()
+            torch.cuda.empty_cache()
+            gc.collect()
         else :
             print(f"Model {loss_name} is Already pretrained.")
 
@@ -493,8 +494,8 @@ if __name__ == "__main__":
     test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64)
 
 
-    os.makedirs("resulttf/val", exist_ok = True)
-    os.makedirs("resulttf/test", exist_ok = True)
+    os.makedirs(f"result/{data}/val", exist_ok = True)
+    os.makedirs(f"result/{data}/test", exist_ok = True)
 
     val_preds = {}
     test_preds = {}
@@ -509,8 +510,8 @@ if __name__ == "__main__":
             pred_val, pred_test = transfer_FC(model_num, loss_name = loss_name)
 
             ## 예측 결과 저장
-            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFTF_{data}_{save_name[i]}_pred.csv")
-            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFTF_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFTF_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFTF_{data}_{save_name[i]}_pred.csv")
 
             val_preds[loss_name] = pred_val
             test_preds[loss_name] = pred_test
@@ -540,8 +541,8 @@ if __name__ == "__main__":
         pred_val, pred_test = transfer_FC(model_num, loss_name = transfer_loss)
 
         ## 예측 결과 저장
-        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFTF_{data}_{transfer_loss}_pred.csv")
-        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFTF_{data}_{transfer_loss}_pred.csv")
+        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFTF_{data}_{transfer_loss}_pred.csv")
+        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFTF_{data}_{transfer_loss}_pred.csv")
 
     ## ========== 지표별 단독 RMSE 저장 (어차피 안쓰는 파일인데?) ==========
     # rmse = []

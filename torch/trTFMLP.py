@@ -339,15 +339,19 @@ if __name__ == "__main__":
     parser.add_argument("--data", type = str, default = "coin", help = "target dataset name")
     parser.add_argument("--lr", type = float, default = 1e-6, help = "transfer learning rate")
     parser.add_argument("--backbone", type = str, default = "PatchTSTBackbone", help = "backbone model name")
+    parser.add_argument("--transfer_loss", type = str, default = "all", help = "transfer loss type")
+    parser.add_argument("--device_id", type = int, default = 0, help = "GPU id")
 
     args = parser.parse_args()
 
     data = args.data
     backbone_name = args.backbone
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    transfer_loss = args.transfer_loss
+
+    device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
     output_dir = "saved_models"
-    log_dir = os.path.join('logstf', data)
+    log_dir = f'logs/{data}/mlp'
     learning_rate = args.lr
     pretraining_lr = 5e-5
     model_num = args.model_num
@@ -441,8 +445,8 @@ if __name__ == "__main__":
     test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64)
 
 
-    os.makedirs("resulttf/val", exist_ok = True)
-    os.makedirs("resulttf/test", exist_ok = True)
+    os.makedirs(f"result/{data}/val", exist_ok = True)
+    os.makedirs(f"result/{data}/test", exist_ok = True)
 
     val_preds = {}
     test_preds = {}
@@ -450,48 +454,58 @@ if __name__ == "__main__":
     ## 변수 이름 설정에 일관성이 없네
     save_name = ["mse", "mae", "mase", "mape", "smape"]
 
-    for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
-        print(f"Start to Transfer Learning with {loss_name}.")
+    if transfer_loss == "all":
+        for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
+            print(f"Start to Transfer Learning with {loss_name}.")
 
-        pred_val, pred_test = transfer_FC(model_num, loss_name = loss_name)
+            pred_val, pred_test = transfer_FC(model_num, loss_name = loss_name)
+
+            ## 예측 결과 저장
+            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFMLP_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFMLP_{data}_{save_name[i]}_pred.csv")
+
+            val_preds[loss_name] = pred_val
+            test_preds[loss_name] = pred_test
+
+        ## ========== 전체/부분 앙상블 RMSE 출력 ==========
+        concat_G = np.concatenate(list(val_preds.values()))
+        fin_pred_G = np.median(concat_G, axis = 0)
+        print("all (RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+        print(f"all (MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
+
+        ## 어떤 점에서 best?
+        concat_G = np.concatenate([val_preds[loss] for loss in ["mae", "MASE", "mse"]])
+        fin_pred_G = np.median(concat_G, axis = 0)
+        print("best (RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+        print(f"best (MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
+
+        ## 변수별 앙상블 결과
+        for name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
+            concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan=0)])
+            fin_pred_G = np.median(concat_G, axis=0)
+            print(name, "(RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
+            print(name, f"(MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
+    
+    else:
+        print(f"Start to Transfer Learning with {transfer_loss}.")
+
+        pred_val, pred_test = transfer_FC(model_num, loss_name = transfer_loss)
 
         ## 예측 결과 저장
-        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"resulttf/val/trTFMLP_{data}_{save_name[i]}_pred.csv")
-        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"resulttf/test/trTFMLP_{data}_{save_name[i]}_pred.csv")
-
-        val_preds[loss_name] = pred_val
-        test_preds[loss_name] = pred_test
-
-    ## ========== 전체/부분 앙상블 RMSE 출력 ==========
-    concat_G = np.concatenate(list(val_preds.values()))
-    fin_pred_G = np.median(concat_G, axis = 0)
-    print("all (RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
-    print(f"all (MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
-
-    ## 어떤 점에서 best?
-    concat_G = np.concatenate([val_preds[loss] for loss in ["mae", "MASE", "mse"]])
-    fin_pred_G = np.median(concat_G, axis = 0)
-    print("best (RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
-    print(f"best (MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
-
-    ## 변수별 앙상블 결과
-    for name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
-        concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan=0)])
-        fin_pred_G = np.median(concat_G, axis=0)
-        print(name, "(RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
-        print(name, f"(MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
+        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFMLP_{data}_{transfer_loss}_pred.csv")
+        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFMLP_{data}_{transfer_loss}_pred.csv")
 
     ## ========== 지표별 단독 RMSE 저장 (어차피 안쓰는 파일인데?) ==========
-    rmse = []
-    mae = []
+    # rmse = []
+    # mae = []
 
-    for name in ["MASE", "mape", "SMAPE", "mae", "mse"]:
-        concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan = 0)])
-        fin_pred = np.median(concat_G, axis = 0)
-        rmse.append(np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred.flatten())).round(5))
-        mae.append(round(mean_absolute_error(target_y_val.flatten(), fin_pred.flatten()), 5))
+    # for name in ["MASE", "mape", "SMAPE", "mae", "mse"]:
+    #     concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan = 0)])
+    #     fin_pred = np.median(concat_G, axis = 0)
+    #     rmse.append(np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred.flatten())).round(5))
+    #     mae.append(round(mean_absolute_error(target_y_val.flatten(), fin_pred.flatten()), 5))
 
-    performance = np.array(rmse)
-    os.makedirs("resulttf", exist_ok = True)
-    pd.DataFrame(performance).to_csv(f"resulttf/trTFMLP_{data}_weight.csv")
-    pd.DataFrame(np.array(mae)).to_csv(f"resulttf/trTFMLP_{data}_weight_mae.csv")
+    # performance = np.array(rmse)
+    # os.makedirs(f"result/{data}", exist_ok = True)
+    # pd.DataFrame(performance).to_csv(f"result/{data}/trTFMLP_{data}_weight.csv")
+    # pd.DataFrame(np.array(mae)).to_csv(f"result/{data}/trTFMLP_{data}_weight_mae.csv")

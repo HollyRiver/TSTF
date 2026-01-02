@@ -1,0 +1,1 @@
+nohup python run_all.py &

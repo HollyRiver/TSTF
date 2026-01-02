@@ -1,8 +1,7 @@
 **/logstf
 **/saved_models
-# **/resulttf
-# **/result
 **/pretrained
 **/logs
 **/inference
+**/running_logs
 *.h5
