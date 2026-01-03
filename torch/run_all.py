@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import subprocess
 import os
+import argparse
 from queue import Empty
 
 ## 1. 실험 설정
@@ -69,6 +70,13 @@ def worker(task_queue, gpu_id):
             print(f"!! [GPU {gpu_id}] Failed: {script_name} on {data_name} (Check {log_file}) !!")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = "MultiProcessing Setting")
+
+    parser.add_argument("--num_gpus", type = int, default = 1, help = "GPU 개수")
+    parser.add_argument("--num_process", type = int, default = 4, help = "프로세싱 개수 (GPU Utilize가 90 이상이 되도록 조정할 것)")
+
+    args = parser.parse_args()
+
     ## 2. 모든 작업 조합 생성 후 필터링
     all_tasks = [(s, d) for s in scripts for d in datasets]
     filtered_tasks = []
@@ -88,8 +96,8 @@ if __name__ == "__main__":
 
     ## 4. 워커 실행
     processes = []
-    for i in range(8):
-        p = mp.Process(target=worker, args=(task_queue, i % 2))
+    for i in range(args.num_process):
+        p = mp.Process(target=worker, args=(task_queue, i % args.num_gpus))
         p.start()
         processes.append(p)
 

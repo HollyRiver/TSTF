@@ -1,1 +1,1 @@
-nohup python run_all.py &
+nohup python run_all.py --num_gpus=2 --num_process=8 &
