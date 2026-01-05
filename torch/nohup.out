@@ -1,4 +1,9 @@
 --- 실험 상태 체크 중 ---
-Skipping: trTFTF.py - coin (이미 결과가 존재합니다)
+Skipping: trTFMLP.py - AIR (이미 결과가 존재합니다)
 Skipping: trTFMLP.py - coin (이미 결과가 존재합니다)
---- 총 19개의 새로운 작업을 시작합니다 ---
+Skipping: trTFMLP.py - ELE (이미 결과가 존재합니다)
+Skipping: trTFMLP.py - MET (이미 결과가 존재합니다)
+Skipping: trTFMLP.py - SOL (이미 결과가 존재합니다)
+Skipping: trTFMLP.py - TEM (이미 결과가 존재합니다)
+Skipping: trTFMLP.py - WID (이미 결과가 존재합니다)
+--- 총 14개의 새로운 작업을 시작합니다 ---

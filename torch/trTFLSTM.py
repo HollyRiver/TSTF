@@ -463,8 +463,8 @@ if __name__ == "__main__":
             pred_val, pred_test = transfer_FC(model_num, loss_name = loss_name)
 
             ## 예측 결과 저장
-            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFTF_{data}_{save_name[i]}_pred.csv")
-            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFTF_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFLSTM_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFLSTM_{data}_{save_name[i]}_pred.csv")
 
             val_preds[loss_name] = pred_val
             test_preds[loss_name] = pred_test
@@ -494,8 +494,8 @@ if __name__ == "__main__":
         pred_val, pred_test = transfer_FC(model_num, loss_name = transfer_loss)
 
         ## 예측 결과 저장
-        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFTF_{data}_{transfer_loss}_pred.csv")
-        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFTF_{data}_{transfer_loss}_pred.csv")
+        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFLSTM_{data}_{transfer_loss}_pred.csv")
+        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFLSTM_{data}_{transfer_loss}_pred.csv")
 
     ## ========== 지표별 단독 RMSE 저장 (어차피 안쓰는 파일인데?) ==========
     # rmse = []
