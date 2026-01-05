@@ -299,7 +299,7 @@ def transfer_FC(model_num, loss_name):
 
         model_instance.load_state_dict(best_state_dict)
 
-        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{i}_TF.csv"))
+        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{i}_LSTM.csv"))
 
         with torch.no_grad():
             yys = []
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
     output_dir = "saved_models"
-    log_dir = f"logs/{data}/tf"
+    log_dir = f"logs/{data}/lstm"
     learning_rate = args.lr
     pretraining_lr = 5e-5
     model_num = args.model_num
