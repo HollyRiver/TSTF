@@ -60,16 +60,14 @@ def scratchTraining(loss_name, ith):
     X_bootstrap = target_X[select]
     y_bootstrap = target_y[select]
 
-    val_split_index = int(len(X_bootstrap) * 0.8)
-
     def to_tensor_and_reshape(array):
         result = torch.tensor(array)
         result = result.reshape(-1, result.shape[1], 1)
 
         return result
 
-    X_train, X_valid = to_tensor_and_reshape(X_bootstrap[:val_split_index]), to_tensor_and_reshape(X_bootstrap[val_split_index:])
-    y_train, y_valid = to_tensor_and_reshape(y_bootstrap[:val_split_index]), to_tensor_and_reshape(y_bootstrap[val_split_index:])
+    X_train, X_valid = to_tensor_and_reshape(X_bootstrap), to_tensor_and_reshape(target_X_val)
+    y_train, y_valid = to_tensor_and_reshape(y_bootstrap), to_tensor_and_reshape(target_y_val)
 
     ## setting dataloader
     train_dataset = torch.utils.data.TensorDataset(X_train, y_train)
@@ -181,13 +179,12 @@ def scratchTraining(loss_name, ith):
 
         yyhat, yy = torch.concat(yyhats).squeeze(), torch.concat(yys).squeeze()
         model_pred_val = yyhat.to("cpu")
-        model_gt_val = yy.to("cpu")
 
     del backbone_model
     torch.cuda.empty_cache()
     gc.collect()
 
-    return model_gt_val, model_pred_val, model_pred_test
+    return model_pred_val, model_pred_test
 
 
 if __name__ == "__main__":
@@ -220,6 +217,11 @@ if __name__ == "__main__":
     ## target domain
     target_X = pd.read_csv(f"../data/{data}/train_input_7.csv").iloc[:, 1:].values.astype(np.float32)
     target_y = pd.read_csv(f"../data/{data}/train_output_7.csv").iloc[:, 1:].values.astype(np.float32)
+
+    target_X_val = target_X[-round(target_X.shape[0] * 0.2):, :].astype(np.float32)
+    target_y_val = target_y[-round(target_y.shape[0] * 0.2):].astype(np.float32)
+    target_X = target_X[:-round(target_X.shape[0] * 0.2), :].astype(np.float32)
+    target_y = target_y[:-round(target_y.shape[0] * 0.2)].astype(np.float32)
 
     test_X  = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
     test_y  = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
@@ -281,13 +283,11 @@ if __name__ == "__main__":
     for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
         print(f"Start to training with {loss_name}.")
 
-        gts_val = []
         preds_val = []
         preds_test = []
 
         for ith in range(1, model_num+1):
-            gt_val, pred_val, pred_test = scratchTraining(loss_name = loss_name, ith = ith)
-            gts_val.append(gt_val)
+            pred_val, pred_test = scratchTraining(loss_name = loss_name, ith = ith)
             preds_val.append(pred_val)
             preds_test.append(pred_test)
 
@@ -295,6 +295,5 @@ if __name__ == "__main__":
             gc.collect()
 
         ## 최종 결과 저장
-        pd.DataFrame(np.array(gts_val).reshape(1, -1)).to_csv(f"result/{data}/val/Scratch_{data}_{save_name[i]}_gt.csv")
         pd.DataFrame(np.array(preds_val).reshape(1, -1)).to_csv(f"result/{data}/val/Scratch_{data}_{save_name[i]}_pred.csv")
         pd.DataFrame(np.array(preds_test).reshape(1, -1)).to_csv(f"result/{data}/test/Scratch_{data}_{save_name[i]}_pred.csv")
