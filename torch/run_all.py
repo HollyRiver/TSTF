@@ -5,10 +5,8 @@ import argparse
 from queue import Empty
 
 ## 1. 실험 설정
-scripts = ["trTFTF.py", "trTFMLP.py", "trTFLSTM.py"]
 datasets = ["AIR", "coin", "ELE", "MET", "SOL", "TEM", "WID"]
 model_num = 100
-lr = "1e-6"
 backbone = "PatchTSTBackbone"
 
 def should_skip(script_name, data_name):
@@ -39,6 +37,12 @@ def worker(task_queue, gpu_id):
         try:
             ## 큐에서 작업 하나 꺼내기
             script_name, data_name = task_queue.get(timeout=3)
+
+            if script_name == "Scratch":
+                lr = args.scratch_lr
+            else :
+                lr = args.lr
+                
         except Empty:
             break
 
@@ -48,7 +52,7 @@ def worker(task_queue, gpu_id):
         
         ## 실행할 명령어 구성
         cmd = [
-            "python", script_name,
+            "python", f"{script_name}.py",
             f"--model_num={model_num}",
             f"--data={data_name}",
             f"--lr={lr}",
@@ -72,13 +76,16 @@ def worker(task_queue, gpu_id):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "MultiProcessing Setting")
 
+    parser.add_argument("--script_names", nargs = "+", help = "띄어쓰기로 .py를 제외한 실행할 스크립트 이름 입력")
     parser.add_argument("--num_gpus", type = int, default = 1, help = "GPU 개수")
     parser.add_argument("--num_process", type = int, default = 4, help = "프로세싱 개수 (GPU Utilize가 90 이상이 되도록 조정할 것)")
+    parser.add_argument("--lr", type = float, default = 1e-6, help = "learning_rate")
+    parser.add_argument("--scratch_lr", type = float, default = 1e-4, help = "scratch (PatchTST)")
 
     args = parser.parse_args()
 
     ## 2. 모든 작업 조합 생성 후 필터링
-    all_tasks = [(s, d) for s in scripts for d in datasets]
+    all_tasks = [(s, d) for s in args.script_names for d in datasets]
     filtered_tasks = []
 
     print("--- 실험 상태 체크 중 ---")
