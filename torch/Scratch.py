@@ -125,7 +125,7 @@ def scratchTraining(loss_name, ith):
             yys = []
             yyhats = []
 
-            for XX, yy in test_dataloader:
+            for XX, yy in val_dataloader:
                 XX = XX.to(device)
                 yys.append(yy.to(device))
                 yyhats.append(backbone_model(XX).prediction_outputs)

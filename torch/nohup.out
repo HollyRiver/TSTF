@@ -1,0 +1,25 @@
+--- 실험 상태 체크 중 ---
+--- 총 7개의 새로운 작업을 시작합니다 ---
+== [GPU 0] Start: Scratch on AIR ==
+!! [GPU 0] Failed: Scratch on AIR (Check running_logs/log_Scratch_AIR.txt) !!
+== [GPU 0] Start: Scratch on SOL ==
+!! [GPU 0] Failed: Scratch on SOL (Check running_logs/log_Scratch_SOL.txt) !!
+== [GPU 0] Start: Scratch on ELE ==
+!! [GPU 0] Failed: Scratch on ELE (Check running_logs/log_Scratch_ELE.txt) !!
+== [GPU 0] Start: Scratch on WID ==
+!! [GPU 0] Failed: Scratch on WID (Check running_logs/log_Scratch_WID.txt) !!
+== [GPU 1] Start: Scratch on coin ==
+!! [GPU 1] Failed: Scratch on coin (Check running_logs/log_Scratch_coin.txt) !!
+== [GPU 1] Start: Scratch on MET ==
+!! [GPU 1] Failed: Scratch on MET (Check running_logs/log_Scratch_MET.txt) !!
+== [GPU 1] Start: Scratch on TEM ==
+!! [GPU 1] Failed: Scratch on TEM (Check running_logs/log_Scratch_TEM.txt) !!
+모든 실험이 종료되었습니다.
+--- 실험 상태 체크 중 ---
+--- 총 7개의 새로운 작업을 시작합니다 ---
+== [GPU 0] Start: Scratch on AIR ==
+== [GPU 0] Done: Scratch on AIR ==
+== [GPU 0] Start: Scratch on WID ==
+== [GPU 0] Done: Scratch on WID ==
+== [GPU 1] Start: Scratch on coin ==
+== [GPU 1] Done: Scratch on coin ==
