@@ -23,3 +23,12 @@
 == [GPU 0] Done: Scratch on WID ==
 == [GPU 1] Start: Scratch on coin ==
 == [GPU 1] Done: Scratch on coin ==
+== [GPU 1] Start: Scratch on TEM ==
+== [GPU 1] Done: Scratch on TEM ==
+== [GPU 0] Start: Scratch on ELE ==
+== [GPU 0] Done: Scratch on ELE ==
+== [GPU 0] Start: Scratch on SOL ==
+== [GPU 0] Done: Scratch on SOL ==
+== [GPU 1] Start: Scratch on MET ==
+== [GPU 1] Done: Scratch on MET ==
+모든 실험이 종료되었습니다.
