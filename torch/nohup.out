@@ -1,34 +1,32 @@
 --- 실험 상태 체크 중 ---
 --- 총 7개의 새로운 작업을 시작합니다 ---
-== [GPU 0] Start: Scratch on AIR ==
-!! [GPU 0] Failed: Scratch on AIR (Check running_logs/log_Scratch_AIR.txt) !!
-== [GPU 0] Start: Scratch on SOL ==
-!! [GPU 0] Failed: Scratch on SOL (Check running_logs/log_Scratch_SOL.txt) !!
-== [GPU 0] Start: Scratch on ELE ==
-!! [GPU 0] Failed: Scratch on ELE (Check running_logs/log_Scratch_ELE.txt) !!
-== [GPU 0] Start: Scratch on WID ==
-!! [GPU 0] Failed: Scratch on WID (Check running_logs/log_Scratch_WID.txt) !!
-== [GPU 1] Start: Scratch on coin ==
-!! [GPU 1] Failed: Scratch on coin (Check running_logs/log_Scratch_coin.txt) !!
-== [GPU 1] Start: Scratch on MET ==
-!! [GPU 1] Failed: Scratch on MET (Check running_logs/log_Scratch_MET.txt) !!
-== [GPU 1] Start: Scratch on TEM ==
-!! [GPU 1] Failed: Scratch on TEM (Check running_logs/log_Scratch_TEM.txt) !!
+== [GPU 0] Start: Scratch_Original on AIR ==
+== [GPU 0] Done: Scratch_Original on AIR ==
+== [GPU 1] Start: Scratch_Original on coin ==
+== [GPU 1] Done: Scratch_Original on coin ==
+== [GPU 0] Start: Scratch_Original on WID ==
+== [GPU 0] Done: Scratch_Original on WID ==
+== [GPU 1] Start: Scratch_Original on TEM ==
+== [GPU 1] Done: Scratch_Original on TEM ==
+== [GPU 0] Start: Scratch_Original on SOL ==
+== [GPU 0] Done: Scratch_Original on SOL ==
+== [GPU 1] Start: Scratch_Original on MET ==
+== [GPU 1] Done: Scratch_Original on MET ==
+== [GPU 0] Start: Scratch_Original on ELE ==
+== [GPU 0] Done: Scratch_Original on ELE ==
 모든 실험이 종료되었습니다.
---- 실험 상태 체크 중 ---
---- 총 7개의 새로운 작업을 시작합니다 ---
-== [GPU 0] Start: Scratch on AIR ==
-== [GPU 0] Done: Scratch on AIR ==
-== [GPU 0] Start: Scratch on WID ==
-== [GPU 0] Done: Scratch on WID ==
-== [GPU 1] Start: Scratch on coin ==
-== [GPU 1] Done: Scratch on coin ==
-== [GPU 1] Start: Scratch on TEM ==
-== [GPU 1] Done: Scratch on TEM ==
-== [GPU 0] Start: Scratch on ELE ==
-== [GPU 0] Done: Scratch on ELE ==
-== [GPU 0] Start: Scratch on SOL ==
-== [GPU 0] Done: Scratch on SOL ==
-== [GPU 1] Start: Scratch on MET ==
-== [GPU 1] Done: Scratch on MET ==
-모든 실험이 종료되었습니다.
+Traceback (most recent call last):
+  File "/root/TSTF/torch/Scratch_Original.py", line 9, in <module>
+    from transformers import PatchTSTConfig, PatchTSTForPrediction
+ModuleNotFoundError: No module named 'transformers'
+Backbone Architecture is succesfully generated.
+Start to training with SMAPE.
+Epoch 1/2000 | Train Loss: 137.553529		 Val Loss: 137.457016
+Epoch 2/2000 | Train Loss: 126.513949		 Val Loss: 130.651794
+Epoch 3/2000 | Train Loss: 123.701187		 Val Loss: 130.582397
+Epoch 4/2000 | Train Loss: 122.121130		 Val Loss: 128.560028
+Epoch 5/2000 | Train Loss: 121.488610		 Val Loss: 128.116592
+Epoch 6/2000 | Train Loss: 121.400009		 Val Loss: 128.495407
+Epoch 7/2000 | Train Loss: 122.862461		 Val Loss: 128.225327
+Epoch 8/2000 | Train Loss: 122.822313		 Val Loss: 129.037384
+Epoch 9/2000 | Train Loss: 122.396927		 Val Loss: 127.875580

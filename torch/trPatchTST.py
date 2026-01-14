@@ -5,37 +5,10 @@ import argparse
 import pandas as pd
 import numpy as np
 import torch
-import multiprocessing
 from torch.utils.data import DataLoader
 from transformers import PatchTSTConfig, PatchTSTForPrediction
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from datasets import Dataset
-    
-class LSTMHead(torch.nn.Module):
-    def __init__(self, iw, ow, input_dim):
-        super().__init__()
-
-        self.input_adapter = torch.nn.Linear(
-            iw, ow
-        )
-
-        self.lstm1 = torch.nn.LSTM(input_dim, 128, batch_first = True)
-        self.lstm2 = torch.nn.LSTM(128, 64, batch_first = True)
-
-        self.fc = torch.nn.Linear(64, 1)
-
-    def forward(self, x):
-        ## x : (B, 1, 7, 256)
-        x = x.squeeze(1)            ## (B, 7, 256)
-        x = x.transpose(1, 2)       ## (B, 256, 7)
-        x = self.input_adapter(x)   ## (B, 256, 24)
-        x = x.transpose(1, 2)       ## (B, 24, 256)
-
-        x, _ = self.lstm1(x)
-        x, _ = self.lstm2(x)
-        outputs = self.fc(x)        ## (B, 1, 24)
-
-        return outputs
 
 ## custom loss function
 class MASE(torch.nn.Module):
@@ -209,24 +182,15 @@ def pretraining(loss_name, ith):
     gc.collect()
 
 
-def transfer_FC(model_num, loss_name):
+def transfer(model_num, loss_name):
     model_pred_val, model_pred_test = [], []
-
-    T_OUT = target_y.shape[1]
 
     for i in range(1, model_num + 1):
         current_path = os.path.join(output_dir, f"model_{loss_name}_{i}.pth")
 
         model_instance = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, "PatchTSTBackbone"))
         model_instance.load_state_dict(torch.load(current_path))
-
-        ## output layer 제거, 트랜스포머 헤드 부착
-        model_instance.head.flatten = torch.nn.Identity()
-        model_instance.head.projection = LSTMHead(
-            iw = 7, ow = target_y.shape[1], input_dim = 256
-        )
-        model_instance.dropout = torch.nn.Identity()
-        model_instance.to(device)
+        model_instance.to(device)   ## 변동 없이 그대로 사용
 
         optimizer = torch.optim.Adam(model_instance.parameters(), lr = learning_rate)
         log_data = []
@@ -299,7 +263,7 @@ def transfer_FC(model_num, loss_name):
 
         model_instance.load_state_dict(best_state_dict)
 
-        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{i}_LSTM.csv"))
+        pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"transfer_{loss_name}_lr{learning_rate}_run{i}.csv"))
 
         with torch.no_grad():
             yys = []
@@ -334,6 +298,7 @@ def transfer_FC(model_num, loss_name):
 
     return model_pred_val, model_pred_test
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "data, learning_rate, model_num")
 
@@ -353,7 +318,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
     output_dir = "saved_models"
-    log_dir = f"logs/{data}/lstm"
+    log_dir = f'logs/{data}/patchtst'
     learning_rate = args.lr
     pretraining_lr = 5e-5
     model_num = args.model_num
@@ -372,8 +337,8 @@ if __name__ == "__main__":
     target_X = target_X[:-round(target_X.shape[0] * 0.2), :].astype(np.float32)
     target_y = target_y[:-round(target_y.shape[0] * 0.2)].astype(np.float32)
 
-    test_X = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
-    test_y = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
+    test_X  = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
+    test_y  = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
 
     ## source domain
     np.random.seed(2)
@@ -423,8 +388,8 @@ if __name__ == "__main__":
                 ## 사전학습, 손실 로그, val_results, state_dict
                 pretraining(loss_name = loss_name, ith = ith)
 
-            torch.cuda.empty_cache()
-            gc.collect()
+                torch.cuda.empty_cache()
+                gc.collect()
         else :
             print(f"Model {loss_name} is Already pretrained.")
 
@@ -460,11 +425,11 @@ if __name__ == "__main__":
         for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
             print(f"Start to Transfer Learning with {loss_name}.")
 
-            pred_val, pred_test = transfer_FC(model_num, loss_name = loss_name)
+            pred_val, pred_test = transfer(model_num, loss_name = loss_name)
 
             ## 예측 결과 저장
-            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFLSTM_{data}_{save_name[i]}_pred.csv")
-            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFLSTM_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trPatchTST_{data}_{save_name[i]}_pred.csv")
+            pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trPatchTST_{data}_{save_name[i]}_pred.csv")
 
             val_preds[loss_name] = pred_val
             test_preds[loss_name] = pred_test
@@ -487,27 +452,12 @@ if __name__ == "__main__":
             fin_pred_G = np.median(concat_G, axis=0)
             print(name, "(RMSE):", np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred_G.flatten())).round(5))
             print(name, f"(MAE):  {mean_absolute_error(target_y_val.flatten(), fin_pred_G.flatten()):.5f}")
-
+    
     else:
         print(f"Start to Transfer Learning with {transfer_loss}.")
 
-        pred_val, pred_test = transfer_FC(model_num, loss_name = transfer_loss)
+        pred_val, pred_test = transfer(model_num, loss_name = transfer_loss)
 
         ## 예측 결과 저장
-        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trTFLSTM_{data}_{transfer_loss}_pred.csv")
-        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trTFLSTM_{data}_{transfer_loss}_pred.csv")
-
-    ## ========== 지표별 단독 RMSE 저장 (어차피 안쓰는 파일인데?) ==========
-    # rmse = []
-    # mae = []
-
-    # for name in ["MASE", "mape", "SMAPE", "mae", "mse"]:
-    #     concat_G = np.concatenate([np.nan_to_num(np.array(val_preds[name]), nan = 0)])
-    #     fin_pred = np.median(concat_G, axis = 0)
-    #     rmse.append(np.sqrt(mean_squared_error(target_y_val.flatten(), fin_pred.flatten())).round(5))
-    #     mae.append(round(mean_absolute_error(target_y_val.flatten(), fin_pred.flatten()), 5))
-
-    # performance = np.array(rmse)
-    # os.makedirs("resulttf", exist_ok = True)
-    # pd.DataFrame(performance).to_csv(f"resulttf/trTFTF_{data}_weight.csv")
-    # pd.DataFrame(np.array(mae)).to_csv(f"resulttf/trTFTF_{data}_weight_mae.csv")
+        pd.DataFrame(np.array(pred_val).reshape(1, -1)).to_csv(f"result/{data}/val/trPatchTST_{data}_{transfer_loss}_pred.csv")
+        pd.DataFrame(np.array(pred_test).reshape(1, -1)).to_csv(f"result/{data}/test/trPatchTST_{data}_{transfer_loss}_pred.csv")

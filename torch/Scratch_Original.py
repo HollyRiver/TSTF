@@ -152,7 +152,7 @@ def scratchTraining(loss_name, ith):
         scheduler.step()
 
     ## save log
-    pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"scratch_{loss_name}_model{ith}.csv"))
+    pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"scratch_original_{loss_name}_model{ith}.csv"))
 
     ## load best model
     backbone_model.load_state_dict(best_state_dict)
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_num", type = int, default = 100, help = "Model k per loss")
     parser.add_argument("--data", type = str, default = "coin", help = "target dataset name")
     parser.add_argument("--lr", type = float, default = 1e-4, help = "Scratch model learning rate")
-    parser.add_argument("--backbone", type = str, default = "PatchTSTBackbone", help = "backbone model name")
+    parser.add_argument("--backbone", type = str, default = "PatchTSTOriginBackbone", help = "backbone model name")
     parser.add_argument("--transfer_loss", type = str, default = "all", help = "transfer loss type")
     parser.add_argument("--device_id", type = int, default = 0, help = "GPU id")
 
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
     output_dir = "saved_models"
-    log_dir = f'logs/{data}/scratch'
+    log_dir = f'logs/{data}/scratch_original'
     learning_rate = args.lr
     model_num = args.model_num
 
@@ -242,25 +242,19 @@ if __name__ == "__main__":
     os.makedirs(f"result/{data}/test", exist_ok = True)
 
 
-    #### ========== Generate PatchTST(Scratch) Architecture ==========
+    #### ========== Generate PatchTST Original Architecture ==========
     if not os.path.isdir(os.path.join(output_dir, backbone_name)):
         TSTconfig = PatchTSTConfig(
             num_input_channels = 1,
             context_length = 168,
+            d_model = 128,
+            ffn_dim = 256,
+            num_attention_heads = 16,
             prediction_length = 24,
-            patch_length = 24,
-            patch_stride = 24,
-            d_model = 256,
-            num_attention_heads = 8,
-            num_hidden_layers = 8,
-            ffn_dim = 1024,
-            dropout = 0.2,
-            head_dropout = 0.2,
-            pooling_type = None,
-            channel_attention = False,
-            scaling = "std",
-            pre_norm = True,
-            do_mask_input = False
+            patch_length = 16,
+            patch_stride = 8,
+            attention_dropout = 0.2,
+            ff_dropout = 0.2
         )
 
         model = PatchTSTForPrediction(TSTconfig)
@@ -273,11 +267,9 @@ if __name__ == "__main__":
 
     
     #### ========== Scratch Training ==========
-    val_gts = {}
     val_preds = {}
     test_preds = {}
 
-    ## 변수 이름 설정에 일관성이 없네
     save_name = ["mse", "mae", "mase", "mape", "smape"]
 
     for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
@@ -295,5 +287,5 @@ if __name__ == "__main__":
             gc.collect()
 
         ## 최종 결과 저장
-        pd.DataFrame(np.array(preds_val).reshape(1, -1)).to_csv(f"result/{data}/val/Scratch_{data}_{save_name[i]}_pred.csv")
-        pd.DataFrame(np.array(preds_test).reshape(1, -1)).to_csv(f"result/{data}/test/Scratch_{data}_{save_name[i]}_pred.csv")
+        pd.DataFrame(np.array(preds_val).reshape(1, -1)).to_csv(f"result/{data}/val/Scratch_Original_{data}_{save_name[i]}_pred.csv")
+        pd.DataFrame(np.array(preds_test).reshape(1, -1)).to_csv(f"result/{data}/test/Scratch_Original_{data}_{save_name[i]}_pred.csv")

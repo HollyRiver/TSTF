@@ -48,9 +48,9 @@ class MASE(torch.nn.Module):
         error = torch.abs(y - yhat)
         return torch.mean(error) / self.scale
 
-def SMAPE(yhat, y):
+def SMAPE(yhat, y, epsilon=1e-7):
     numerator = 100*torch.abs(y - yhat)
-    denominator = (torch.abs(y) + torch.abs(yhat))/2
+    denominator = torch.clamp((torch.abs(y) + torch.abs(yhat))/2, min=epsilon)
     smape = torch.mean(numerator / denominator)
     return smape
 

@@ -7,7 +7,6 @@ from queue import Empty
 ## 1. 실험 설정
 datasets = ["AIR", "coin", "ELE", "MET", "SOL", "TEM", "WID"]
 model_num = 100
-backbone = "PatchTSTBackbone"
 
 def should_skip(script_name, data_name):
     """
@@ -38,10 +37,15 @@ def worker(task_queue, gpu_id):
             ## 큐에서 작업 하나 꺼내기
             script_name, data_name = task_queue.get(timeout=3)
 
-            if script_name == "Scratch":
+            if script_name == "Scratch" or script_name == "Scratch_Original":
                 lr = args.scratch_lr
             else :
                 lr = args.lr
+
+            if script_name == "Scratch_Original":
+                backbone_name = "PatchTSTOriginalBackbone"
+            else:
+                backbone_name = "PatchTSTBackbone"
                 
         except Empty:
             break
@@ -56,7 +60,7 @@ def worker(task_queue, gpu_id):
             f"--model_num={model_num}",
             f"--data={data_name}",
             f"--lr={lr}",
-            f"--backbone={backbone}",
+            f"--backbone={backbone_name}",
             "--transfer_loss=all",
             f"--device_id={gpu_id}"
         ]
