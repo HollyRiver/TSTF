@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import torch
+import multiprocessing
 from torch.utils.data import DataLoader
 from transformers import PatchTSTConfig, PatchTSTForPrediction
 from sklearn.metrics import mean_squared_error, mean_absolute_error
@@ -40,25 +41,14 @@ def MAPE(y_pred, y_true, epsilon=1e-7):
     return torch.mean(100. * abs_percent_error)
 
 
-def savePredsAndTruth(yhat, y, loss_name, ith):
-    """
-    Pretrained Model에서 Prediction과 Ground Truth Log 저장 (훈련 후 호출)
-    """
-    yhat, y = pd.DataFrame(yhat.to("cpu")), pd.DataFrame(y.to("cpu"))   ## 데이터프레임으로 만들거임
-    yhat.columns = [f"{i}A" for i in range(yhat.shape[1])]
-    y.columns = [f"{i}B" for i in range(y.shape[1])]
-
-    val_result = pd.concat([yhat, y], axis = 1).sort_index(axis = 1)
-    val_result.columns = [f"prediction_{(i+1)//2}" if i%2 == 1 else f"ground_truth_{(i+1)//2}" for i in range(1, val_result.shape[1]+1)]
-    val_result.to_csv(os.path.join(log_dir, f"prediction_val_results_{loss_name}_model{ith}.csv"), index = False)
-    
-
-def scratchTraining(loss_name, ith):
+def pretraining(loss_name, ith):
     ## bootstrap
     np.random.seed()
-    select = np.random.choice(len(target_X), size=len(target_X), replace=True)
-    X_bootstrap = target_X[select]
-    y_bootstrap = target_y[select]
+    select = np.random.choice(len(source_X), size=len(source_X), replace=True)
+    X_bootstrap = source_X[select]
+    y_bootstrap = source_y[select]
+
+    val_split_index = int(len(X_bootstrap) * 0.8)
 
     def to_tensor_and_reshape(array):
         result = torch.tensor(array)
@@ -66,32 +56,37 @@ def scratchTraining(loss_name, ith):
 
         return result
 
-    X_train, X_valid = to_tensor_and_reshape(X_bootstrap), to_tensor_and_reshape(target_X_val)
-    y_train, y_valid = to_tensor_and_reshape(y_bootstrap), to_tensor_and_reshape(target_y_val)
+    X_train, X_valid = to_tensor_and_reshape(X_bootstrap[:val_split_index]), to_tensor_and_reshape(X_bootstrap[val_split_index:])
+    y_train, y_valid = to_tensor_and_reshape(y_bootstrap[:val_split_index]), to_tensor_and_reshape(y_bootstrap[val_split_index:])
 
     ## setting dataloader
     train_dataset = torch.utils.data.TensorDataset(X_train, y_train)
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = 8, shuffle = True, num_workers = 2)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = 256, shuffle = True, num_workers = 4)
 
-    val_dataset = torch.utils.data.TensorDataset(X_valid, y_valid)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size = 8, num_workers = 2)
+    test_dataset = torch.utils.data.TensorDataset(X_valid, y_valid)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 256, num_workers = 4)
 
     backbone_model = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, backbone_name)).to(device)  ## load to gpu
 
     if loss_name == "mse":
         loss_fn = torch.nn.MSELoss()
+        lr = pretraining_lr
     elif loss_name == "mae":
-        loss_fn = torch.nn.L1Loss()
+        loss_fn = torch.nn.L1Loss() ## 2배면 잘 작동
+        lr = pretraining_lr * 2
     elif loss_name == "SMAPE":
-        loss_fn = SMAPE
+        loss_fn = SMAPE             ## 4배면 잘 작동
+        lr = pretraining_lr * 4
     elif loss_name == "mape":
-        loss_fn = MAPE
+        loss_fn = MAPE_pretrained   ## 2배면 잘 작동
+        lr = pretraining_lr * 2
     elif loss_name == "MASE":
-        loss_fn = MASE(target_y, target_y.shape[1])
+        loss_fn = MASE(source_y, source_y.shape[1])
+        lr = pretraining_lr * 14  ## 학습률 정상화... 그래도 잘 안됨
     else:
         raise Exception("Your loss name is not valid.")
 
-    optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = learning_rate)
+    optimizer = torch.optim.AdamW(backbone_model.parameters(), lr = lr)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = num_train_epochs)
     log_data = []
 
@@ -125,7 +120,7 @@ def scratchTraining(loss_name, ith):
             yys = []
             yyhats = []
 
-            for XX, yy in val_dataloader:
+            for XX, yy in test_dataloader:
                 XX = XX.to(device)
                 yys.append(yy.to(device))
                 yyhats.append(backbone_model(XX).prediction_outputs)
@@ -141,7 +136,7 @@ def scratchTraining(loss_name, ith):
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_state_dict = backbone_model.state_dict()
+            torch.save(backbone_model.state_dict(), os.path.join(output_dir, f"model_{loss_name}_{ith}.pth"))
             patience_counter = 0
         else:
             patience_counter += 1
@@ -151,40 +146,23 @@ def scratchTraining(loss_name, ith):
 
         scheduler.step()
 
-    ## save log
-    pd.DataFrame(log_data).to_csv(os.path.join(log_dir, f"scratch_original_{loss_name}_model{ith}.csv"))
-
     ## load best model
-    backbone_model.load_state_dict(best_state_dict)
+    backbone_model.load_state_dict(torch.load(os.path.join(output_dir, f"model_{loss_name}_{ith}.pth")))
+
+    yyhats = []
+    yys = []
 
     with torch.no_grad():
-        yyhats = []
-        yys = []
-
         for XX, yy in test_dataloader:
             XX = XX.to(device)
             yys.append(yy.to(device))
             yyhats.append(backbone_model(XX).prediction_outputs)
 
-        yyhat, yy = torch.concat(yyhats).squeeze(), torch.concat(yys).squeeze()
-        model_pred_test = yyhat.to("cpu")
-
-        yyhats = []
-        yys = []
-        
-        for XX, yy in val_dataloader:
-            XX = XX.to(device)
-            yys.append(yy.to(device))
-            yyhats.append(backbone_model(XX).prediction_outputs)
-
-        yyhat, yy = torch.concat(yyhats).squeeze(), torch.concat(yys).squeeze()
-        model_pred_val = yyhat.to("cpu")
+    yyhat, yy = torch.concat(yyhats).squeeze(), torch.concat(yys).squeeze()
 
     del backbone_model
     torch.cuda.empty_cache()
     gc.collect()
-
-    return model_pred_val, model_pred_test
 
 
 if __name__ == "__main__":
@@ -192,25 +170,23 @@ if __name__ == "__main__":
 
     parser.add_argument("--model_num", type = int, default = 100, help = "Model k per loss")
     parser.add_argument("--data", type = str, default = "coin", help = "target dataset name")
-    parser.add_argument("--lr", type = float, default = 1e-4, help = "Scratch model learning rate")
-    parser.add_argument("--backbone", type = str, default = "PatchTSTOriginalBackbone", help = "backbone model name")
-    parser.add_argument("--transfer_loss", type = str, default = "all", help = "transfer loss type")
+    parser.add_argument("--backbone", type = str, default = "PatchTSTOriginlBackbone", help = "backbone model name")
+    parser.add_argument("--training_loss", type = str, default = "all", help = "training loss type")
     parser.add_argument("--device_id", type = int, default = 0, help = "GPU id")
 
     args = parser.parse_args()
 
     data = args.data
     backbone_name = args.backbone
+    training_loss = args.training_loss
 
     device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
-    output_dir = "saved_models"
-    log_dir = f'logs/{data}/scratch_original'
-    learning_rate = args.lr
+    output_dir = f"saved_models/{backbone_name}_pretrained"
+    pretraining_lr = 5e-5
     model_num = args.model_num
 
     os.makedirs(output_dir, exist_ok = True)
-    os.makedirs(log_dir, exist_ok=True)
 
     num_train_epochs = 2000
 
@@ -223,24 +199,16 @@ if __name__ == "__main__":
     target_X = target_X[:-round(target_X.shape[0] * 0.2), :].astype(np.float32)
     target_y = target_y[:-round(target_y.shape[0] * 0.2)].astype(np.float32)
 
-    test_X  = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
-    test_y  = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
+    test_X = pd.read_csv(f"../data/{data}/val_input_7.csv").iloc[:, 1:].values.astype(np.float32)
+    test_y = pd.read_csv(f"../data/{data}/val_output_7.csv").iloc[:, 1:].values.astype(np.float32)
 
-    def array_to_dataset(X, y):
-        X, y = torch.tensor(X), torch.tensor(y)
-        X = X.reshape(-1, X.shape[1], 1)
-        y = y.reshape(-1, y.shape[1], 1)
 
-        dataset = torch.utils.data.TensorDataset(X, y)
-
-        return dataset
-    
-    test_dataset = array_to_dataset(test_X, test_y)
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64)
-
-    os.makedirs(f"result/{data}/val", exist_ok = True)
-    os.makedirs(f"result/{data}/test", exist_ok = True)
-
+    ## source domain
+    np.random.seed(2)
+    random_indices1 = np.random.choice(pd.read_csv("../data/M4_train.csv").iloc[:, (1):].index,
+                                    size=target_X.shape[0] * 20, replace=True)
+    source_X = pd.read_csv("../data/M4_train.csv").iloc[:, 1 + (24 * 0):].loc[random_indices1].values.astype(np.float32)
+    source_y = pd.read_csv("../data/M4_test.csv").iloc[:, 1:].loc[random_indices1].values.astype(np.float32)
 
     #### ========== Generate PatchTST Original Architecture ==========
     if not os.path.isdir(os.path.join(output_dir, backbone_name)):
@@ -266,26 +234,27 @@ if __name__ == "__main__":
         print("Backbone Architecture is already generated.")
 
     
-    #### ========== Scratch Training ==========
-    val_preds = {}
-    test_preds = {}
+    #### ========== Pretraining ==========
+    if training_loss == "all":
+        for loss_name in ["mse", "mae", "MASE", "mape", "SMAPE"]:
+            ## 훈련되지 않은 모델만 훈련
+            if not os.path.isfile(os.path.join(output_dir, f"model_{loss_name}_1.pth")):
+                print(f"Start to pretraining with {loss_name}.")
 
-    save_name = ["mse", "mae", "mase", "mape", "smape"]
+                for ith in range(1, model_num+1):
+                    ## 사전학습, 손실 로그, val_results, state_dict
+                    pretraining(loss_name = loss_name, ith = ith)
 
-    for i, loss_name in enumerate(["mse", "mae", "MASE", "mape", "SMAPE"]):
-        print(f"Start to training with {loss_name}.")
-
-        preds_val = []
-        preds_test = []
+                torch.cuda.empty_cache()
+                gc.collect()
+            else :
+                print(f"Model {loss_name} is Already pretrained.")
+    else:
+        print(f"Start to pretraining with {training_loss}.")
 
         for ith in range(1, model_num+1):
-            pred_val, pred_test = scratchTraining(loss_name = loss_name, ith = ith)
-            preds_val.append(pred_val)
-            preds_test.append(pred_test)
+            ## 사전학습, 손실 로그, val_results, state_dict
+            pretraining(loss_name = training_loss, ith = ith)
 
-            torch.cuda.empty_cache()
-            gc.collect()
-
-        ## 최종 결과 저장
-        pd.DataFrame(np.array(preds_val).reshape(1, -1)).to_csv(f"result/{data}/val/Scratch_Original_{data}_{save_name[i]}_pred.csv")
-        pd.DataFrame(np.array(preds_test).reshape(1, -1)).to_csv(f"result/{data}/test/Scratch_Original_{data}_{save_name[i]}_pred.csv")
+        torch.cuda.empty_cache()
+        gc.collect()

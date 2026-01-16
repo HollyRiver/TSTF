@@ -305,7 +305,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_num", type = int, default = 100, help = "Model k per loss")
     parser.add_argument("--data", type = str, default = "coin", help = "target dataset name")
     parser.add_argument("--lr", type = float, default = 1e-6, help = "transfer learning rate")
-    parser.add_argument("--backbone", type = str, default = "PatchTSTBackbone", help = "backbone model name")
+    parser.add_argument("--backbone", type = str, default = "PatchTSTOriginalBackbone", help = "backbone model name")
     parser.add_argument("--transfer_loss", type = str, default = "all", help = "transfer loss type")
     parser.add_argument("--device_id", type = int, default = 0, help = "GPU id")
 
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
     device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
-    output_dir = "saved_models"
+    output_dir = f"saved_models/{backbone_name}"
     log_dir = f'logs/{data}/patchtst'
     learning_rate = args.lr
     pretraining_lr = 5e-5
