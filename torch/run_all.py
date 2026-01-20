@@ -42,10 +42,10 @@ def worker(task_queue, gpu_id):
             else :
                 lr = args.lr
 
-            if script_name == "Scratch_Original":
-                backbone_name = "PatchTSTOriginalBackbone"
+            if script_name == "Scratch_Original" or script_name == "trPatchTST":
+                backbone_name = "PatchTSTOriginalBackbone"  ## 단순한 논문 모델
             else:
-                backbone_name = "PatchTSTBackbone"
+                backbone_name = "PatchTSTBackbone"      ## 복잡한 모델
                 
         except Empty:
             break

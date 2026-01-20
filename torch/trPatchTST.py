@@ -188,7 +188,7 @@ def transfer(model_num, loss_name):
     for i in range(1, model_num + 1):
         current_path = os.path.join(output_dir, f"model_{loss_name}_{i}.pth")
 
-        model_instance = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, "PatchTSTBackbone"))
+        model_instance = PatchTSTForPrediction.from_pretrained(os.path.join(output_dir, backbone_name))
         model_instance.load_state_dict(torch.load(current_path))
         model_instance.to(device)   ## 변동 없이 그대로 사용
 
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
     device = torch.device(f"cuda:{args.device_id}" if torch.cuda.is_available() else "cpu")
 
-    output_dir = f"saved_models/{backbone_name}"
+    output_dir = f"saved_models/{backbone_name}_pretrained"
     log_dir = f'logs/{data}/patchtst'
     learning_rate = args.lr
     pretraining_lr = 5e-5
