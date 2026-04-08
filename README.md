@@ -1,6 +1,10 @@
 # TSTF
 time series transformer
 
+논문 링크: https://ieeexplore.ieee.org/abstract/document/11443264
+
+> 저자가 아닌 Acknowledgement 항목에 기여도 기재됨
+
 ## 사용 방법
 
 * `main` 폴더는 레거시입니다. 제가 짠 코드는 `torch` 폴더에만 위치합니다.
