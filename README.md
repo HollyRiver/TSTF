@@ -1,4 +1,4 @@
-# TSTF — 시계열 트랜스포머 전이학습 베이스라인 실험 (PyTorch)
+# 시계열 트랜스포머 전이학습 베이스라인 실험 (trTSTF)
 
 &nbsp;IEEE Access 논문 **"Transfer Learning Based on N-BEATS in Forecasting Univariate Time Series"**
 (Lee, Lee, Kim, 2026, *IEEE Access* **14**, 45191–45212, [링크](https://ieeexplore.ieee.org/abstract/document/11443264))의
