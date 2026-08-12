@@ -34,7 +34,7 @@ nohup python run_all.py --num_gpus=2 --num_process=8 &
 
 &nbsp;멀티프로세싱은 태스크(데이터셋 × 어댑터 알고리즘 = 21개) 단위로 구동합니다. 각 태스크 내 500개 모델은 순차 학습이므로, 추후 최적화 시 태스크 내 병렬화를 검토할 수 있습니다.
 
-결과 집계와 앙상블 성능표는 `torch/result_agg.ipynb` 참고.
+* 결과 집계와 앙상블 성능표는 `torch/result_agg.ipynb` 참고.
 
 ## 구조
 
