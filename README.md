@@ -4,9 +4,9 @@
 (Lee, Lee, Kim, 2026, *IEEE Access* **14**, 45191–45212, [링크](https://ieeexplore.ieee.org/abstract/document/11443264))의
 **PatchTST 계열 베이스라인 실험**을 기록한 리포지토리
 
-&nbsp;저자가 아닌 **Acknowledgement**로 기여했으며, `torch/` 디렉토리는 100% 단독 작업입니다. (`main/`은 원저자 측 레거시 Keras 코드 — 참고용)
+&nbsp;저자가 아닌 **Acknowledgement**로 기여했으며, 실험에 사용된 모든 코드가 저장된 `torch/` 디렉토리는 100% 단독 작업입니다. (`main/`은 원저자 측 레거시 Keras 코드 — 아카이브용)
 
-## 기여
+## 개요
 
 * 레거시 Keras 실험을 **PyTorch + HuggingFace PatchTST**로 재구현
 * M4 소스 데이터 부트스트랩 사전학습 → head 교체(Transformer/LSTM/MLP) 파인튜닝 전이학습 파이프라인
