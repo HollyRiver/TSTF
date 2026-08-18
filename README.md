@@ -2,7 +2,7 @@
 
 &nbsp;프론티어 시계열 베이스라인 모델(PatchTST) 기반 전이학습 성능 실험 연구의 코드베이스. 베이스라인으로써 N-Beats 기반 전이학습 모델과의 차이를 식별하기 위함.
 
-&nbsp;저자가 아닌 **Acknowledgement**로 기여했으며, 실험에 사용된 `torch/` 디렉토리의 모든 코드는 직접 구성함을 알림 (`main/`은 원저자 측 레거시 Keras 코드 — 아카이브용)
+&nbsp;저자가 아닌 **Acknowledgement**로 기여했으며, 실험에 사용된 `torch/` 디렉토리의 모든 코드는 직접 구성함을 알림. (`main/`은 원저자 측 레거시 Keras 코드 — 아카이브용)
 
 > Publication (베이스라인 실험 기여 ― Acknowledgement)
 >
