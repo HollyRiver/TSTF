@@ -37,7 +37,7 @@ nohup python run_all.py --num_gpus=2 --num_process=8 &
 
 * 결과 집계와 앙상블 성능표는 `torch/result_agg.ipynb` 참고
 
-## 구조
+## 리포지토리 구조
 
 ```
 ├── data/     # M4 소스 + 7개 타겟 데이터셋
